@@ -86,7 +86,7 @@ export default function TransferPage() {
       <div className="flex min-h-0 flex-1 flex-col bg-white px-4 pt-8">
         <PageHeader backHref="/" title="Перевод" />
         <p className="mt-6 text-[#949494]">Войдите в аккаунт для переводов.</p>
-        <Link href="/register" className="mt-4 text-[#046c6d] underline">
+        <Link href="/?sheet=auth-phone" className="mt-4 text-[#046c6d] underline">
           Регистрация
         </Link>
       </div>

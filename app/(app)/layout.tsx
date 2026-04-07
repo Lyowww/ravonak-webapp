@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { RavonakProvider } from "@/context/RavonakContext";
 import { AppShell } from "@/app/components/ravonak/AppShell";
 import { ToastProvider } from "@/app/components/ravonak/ToastProvider";
@@ -10,7 +11,9 @@ export default function AppGroupLayout({
   return (
     <RavonakProvider>
       <ToastProvider>
-        <AppShell>{children}</AppShell>
+        <AppShell>
+          <Suspense fallback={null}>{children}</Suspense>
+        </AppShell>
       </ToastProvider>
     </RavonakProvider>
   );

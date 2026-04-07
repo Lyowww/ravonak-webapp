@@ -1,23 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getProductById } from "@/lib/api";
 import { productFromApi } from "@/lib/product-map";
 import type { Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
 import { useRavonak } from "@/context/RavonakContext";
+import { useAppSheets } from "@/hooks/useAppSheets";
 import { figma } from "@/app/components/ravonak/assets";
 import { PageHeader } from "@/app/components/ravonak/PageHeader";
 import { useToast } from "@/app/components/ravonak/ToastProvider";
 
 export default function ProductPageClient() {
   const params = useParams();
-  const router = useRouter();
   const id = Number(params.id as string);
   const { addToCart, authStage } = useRavonak();
+  const { openSheet } = useAppSheets();
   const { showToast } = useToast();
   const [qty, setQty] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
@@ -130,19 +130,19 @@ export default function ProductPageClient() {
 
       <div className="fixed bottom-0 left-1/2 z-30 w-full max-w-[390px] -translate-x-1/2 border-t border-[#eee] bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
         <div className="flex gap-3">
-          <Link
-            href="/market/cart"
+          <button
+            type="button"
             className="flex flex-1 items-center justify-center rounded-xl border border-[#046c6d] py-3 text-[14px] font-medium text-[#046c6d]"
+            onClick={() => openSheet("cart")}
           >
             Корзина
-          </Link>
+          </button>
           <button
             type="button"
             className="flex flex-[2] items-center justify-center rounded-xl bg-[#046c6d] py-3 text-[14px] font-medium text-white active:opacity-90"
             onClick={() => {
               if (authStage !== "verified") {
-                showToast("Зарегистрируйтесь, чтобы купить");
-                router.push("/register");
+                openSheet("auth-phone");
                 return;
               }
               void addToCart(id, qty);

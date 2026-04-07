@@ -6,6 +6,7 @@ import { searchProductsApi } from "@/lib/api";
 import { productFromApi } from "@/lib/product-map";
 import type { Product } from "@/lib/types";
 import { useRavonak } from "@/context/RavonakContext";
+import { useAppSheets } from "@/hooks/useAppSheets";
 import { CartBar } from "@/app/components/ravonak/CartBar";
 import { PageHeader } from "@/app/components/ravonak/PageHeader";
 import { ProductCard } from "@/app/components/ravonak/ProductCard";
@@ -18,6 +19,7 @@ export default function MarketSearchClient() {
   const [list, setList] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart, authStage } = useRavonak();
+  const { openSheet } = useAppSheets();
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function MarketSearchClient() {
               onOpen={() => router.push(`/market/product/${p.id}`)}
               onAddToCart={() => {
                 if (authStage !== "verified") {
-                  showToast("Зарегистрируйтесь, чтобы купить");
+                  openSheet("auth-phone");
                   return;
                 }
                 void addToCart(Number(p.id), 1);

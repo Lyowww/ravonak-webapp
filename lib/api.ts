@@ -457,6 +457,34 @@ export async function getActiveOrder(tg_id: number, lang: Lang = "ru") {
   );
 }
 
+export type CustomerOrderDetailsResponse = {
+  success: boolean;
+  order_number: string;
+  status: string;
+  delivery_address: string;
+  recipient_name: string;
+  recipient_phone: string;
+  total_sum_uzs: number;
+  items: {
+    product_id: number;
+    product_name: string;
+    amount: number;
+    unit: string;
+    unit_price_sum: number;
+  }[];
+};
+
+export async function getCustomerOrderDetails(
+  orderNumber: string,
+  tg_id: number,
+  lang: Lang = "ru",
+) {
+  return apiFetch<CustomerOrderDetailsResponse>(
+    `/orders/${encodeURIComponent(orderNumber)}${q({ tg_id, lang })}`,
+    { method: "GET" },
+  );
+}
+
 export type StaffOrderListItem = {
   order_number: string;
   status: string;

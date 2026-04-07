@@ -8,6 +8,7 @@ import { getActiveOrder, searchProductsApi, type MainScreenResponse } from "@/li
 import { productFromApi } from "@/lib/product-map";
 import type { Product } from "@/lib/types";
 import { useRavonak } from "@/context/RavonakContext";
+import { useAppSheets } from "@/hooks/useAppSheets";
 import { figma } from "./assets";
 import { ProductCard } from "./ProductCard";
 import { PromoBanner } from "./PromoBanner";
@@ -17,6 +18,7 @@ import { useToast } from "./ToastProvider";
 export function HomeScreen() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { openSheet } = useAppSheets();
   const {
     userName,
     balanceUsd,
@@ -139,20 +141,26 @@ export function HomeScreen() {
   const addWithAuth = useCallback(
     (productId: number) => {
       if (authStage !== "verified") {
-        showToast("Зарегистрируйтесь, чтобы купить");
+        openSheet("auth-phone");
         return;
       }
       void addToCart(productId, 1);
       showToast("Добавлено в корзину");
     },
-    [authStage, addToCart, showToast],
+    [authStage, addToCart, showToast, openSheet],
   );
 
   return (
     <div className="relative min-h-0 flex-1 bg-white">
       <div className="relative px-6 pb-8 pt-3">
         {activeOrder?.order_number ? (
-          <div className="mb-4 rounded-xl border border-[#046c6d]/30 bg-[#e8f5f5] px-4 py-3 text-[13px] text-[#151515]">
+          <button
+            type="button"
+            onClick={() =>
+              openSheet("order", { order: activeOrder.order_number! })
+            }
+            className="mb-4 w-full rounded-xl border border-[#046c6d]/30 bg-[#e8f5f5] px-4 py-3 text-left text-[13px] text-[#151515] active:opacity-90"
+          >
             <p className="font-medium">
               Заказ {activeOrder.order_number}
               {activeOrder.status ? ` · ${activeOrder.status}` : ""}
@@ -162,7 +170,8 @@ export function HomeScreen() {
                 {activeOrder.total_sum_uzs.toLocaleString("ru-RU")} сум
               </p>
             ) : null}
-          </div>
+            <p className="mt-1 text-[12px] text-[#046c6d]">Подробнее →</p>
+          </button>
         ) : null}
 
         <div className="relative mb-8 flex h-[195px] w-full flex-col items-center gap-10 overflow-hidden pb-9 pt-3">
@@ -394,9 +403,13 @@ export function HomeScreen() {
 
         <nav className="flex flex-col gap-2 border-t border-[#eee] pt-4 text-center text-[13px] text-[#046c6d]">
           {authStage !== "verified" ? (
-            <Link href="/register" className="py-1 underline-offset-2 hover:underline">
+            <button
+              type="button"
+              onClick={() => openSheet("auth-phone")}
+              className="py-1 underline-offset-2 hover:underline"
+            >
               Регистрация / вход
-            </Link>
+            </button>
           ) : null}
           <Link href="/courier" className="py-1 underline-offset-2 hover:underline">
             Курьер
@@ -405,12 +418,13 @@ export function HomeScreen() {
             Сборщик
           </Link>
           {cart.length > 0 ? (
-            <Link
-              href="/market/cart"
+            <button
+              type="button"
+              onClick={() => openSheet("cart")}
               className="py-2 font-medium text-[#151515] underline-offset-2 hover:underline"
             >
               Корзина ({cart.length})
-            </Link>
+            </button>
           ) : null}
         </nav>
       </div>

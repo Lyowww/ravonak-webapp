@@ -7,6 +7,7 @@ import { searchProductsApi } from "@/lib/api";
 import { productFromApi } from "@/lib/product-map";
 import type { Product } from "@/lib/types";
 import { useRavonak } from "@/context/RavonakContext";
+import { useAppSheets } from "@/hooks/useAppSheets";
 import { figma } from "@/app/components/ravonak/assets";
 import { CartBar } from "@/app/components/ravonak/CartBar";
 import { PageHeader } from "@/app/components/ravonak/PageHeader";
@@ -17,6 +18,7 @@ export default function MarketPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const { addToCart, authStage } = useRavonak();
+  const { openSheet } = useAppSheets();
   const [q, setQ] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -46,13 +48,13 @@ export default function MarketPage() {
   const add = useCallback(
     (id: number) => {
       if (authStage !== "verified") {
-        showToast("Зарегистрируйтесь, чтобы купить");
+        openSheet("auth-phone");
         return;
       }
       void addToCart(id, 1);
       showToast("В корзине");
     },
-    [addToCart, authStage, showToast],
+    [addToCart, authStage, showToast, openSheet],
   );
 
   return (

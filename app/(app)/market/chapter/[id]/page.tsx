@@ -7,6 +7,7 @@ import { getChapterProducts } from "@/lib/api";
 import { productFromApi } from "@/lib/product-map";
 import type { Product } from "@/lib/types";
 import { useRavonak } from "@/context/RavonakContext";
+import { useAppSheets } from "@/hooks/useAppSheets";
 import { figma } from "@/app/components/ravonak/assets";
 import { CartBar } from "@/app/components/ravonak/CartBar";
 import { PageHeader } from "@/app/components/ravonak/PageHeader";
@@ -18,6 +19,7 @@ export default function ChapterPage() {
   const router = useRouter();
   const chapterId = Number(params.id as string);
   const { addToCart, authStage, tgId } = useRavonak();
+  const { openSheet } = useAppSheets();
   const { showToast } = useToast();
   const [title, setTitle] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
@@ -90,7 +92,7 @@ export default function ChapterPage() {
                 onOpen={() => router.push(`/market/product/${p.id}`)}
                 onAddToCart={() => {
                   if (authStage !== "verified") {
-                    showToast("Зарегистрируйтесь, чтобы купить");
+                    openSheet("auth-phone");
                     return;
                   }
                   void addToCart(Number(p.id), 1);
