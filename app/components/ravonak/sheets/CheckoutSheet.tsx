@@ -8,6 +8,8 @@ import {
   createRecipient,
   getAddresses,
   getRecipients,
+  selectAddressDefault,
+  selectRecipientDefault,
   type CheckoutPreviewResponse,
 } from "@/lib/api";
 import { useRavonak } from "@/context/RavonakContext";
@@ -37,6 +39,7 @@ export function CheckoutSheet() {
   const [house, setHouse] = useState("");
   const [flat, setFlat] = useState("");
   const [recipientName, setRecipientName] = useState("");
+  const [recipientSurname, setRecipientSurname] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
 
   useEffect(() => {
@@ -153,7 +156,14 @@ export function CheckoutSheet() {
                     <li key={a.id}>
                       <button
                         type="button"
-                        onClick={() => setAddrId(a.id)}
+                        onClick={() => {
+                          setAddrId(a.id);
+                          if (tgId != null) {
+                            void selectAddressDefault(a.id, tgId).catch(() => {
+                              /* ignore */
+                            });
+                          }
+                        }}
                         className={`w-full rounded-xl border px-4 py-3 text-left text-[14px] ${
                           addrId === a.id
                             ? "border-[#046c6d] bg-[#e8f5f5]"
@@ -232,7 +242,14 @@ export function CheckoutSheet() {
                     <li key={r.id}>
                       <button
                         type="button"
-                        onClick={() => setRecId(r.id)}
+                        onClick={() => {
+                          setRecId(r.id);
+                          if (tgId != null) {
+                            void selectRecipientDefault(r.id, tgId).catch(() => {
+                              /* ignore */
+                            });
+                          }
+                        }}
                         className={`w-full rounded-xl border px-4 py-3 text-left text-[14px] ${
                           recId === r.id
                             ? "border-[#046c6d] bg-[#e8f5f5]"
@@ -257,6 +274,12 @@ export function CheckoutSheet() {
                   className="w-full rounded-lg bg-[#eee] px-3 py-2 text-[14px]"
                 />
                 <input
+                  value={recipientSurname}
+                  onChange={(e) => setRecipientSurname(e.target.value)}
+                  placeholder="Фамилия (необязательно)"
+                  className="w-full rounded-lg bg-[#eee] px-3 py-2 text-[14px]"
+                />
+                <input
                   value={recipientPhone}
                   onChange={(e) => setRecipientPhone(e.target.value)}
                   placeholder="Телефон +998…"
@@ -273,6 +296,7 @@ export function CheckoutSheet() {
                     const r = await createRecipient({
                       tg_id: tgId,
                       name: recipientName.trim(),
+                      surname: recipientSurname.trim() || null,
                       phone: recipientPhone.trim(),
                       is_default: true,
                     });

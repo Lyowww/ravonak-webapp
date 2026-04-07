@@ -602,3 +602,65 @@ export async function staffDeliverToClient(
     },
   );
 }
+
+export async function staffHandoverToCourier(
+  orderNumber: string,
+  tg_id: number,
+  confirm: boolean,
+  lang: Lang = "ru",
+) {
+  return apiFetch<{ success: boolean; message: string; order_number: string; status: string }>(
+    `/staff/orders/${encodeURIComponent(orderNumber)}/handover-to-courier`,
+    {
+      method: "POST",
+      body: JSON.stringify({ tg_id, confirm, lang }),
+    },
+  );
+}
+
+export async function assemblerCollectedOrders(tg_id: number, lang: Lang = "ru") {
+  return apiFetch<{ success: boolean; items: StaffOrderListItem[] }>(
+    `/staff/assembler/orders/collected${q({ tg_id, lang })}`,
+    { method: "GET" },
+  );
+}
+
+export async function selectAddressDefault(
+  addressId: number,
+  tg_id: number,
+  lang: Lang = "ru",
+) {
+  return apiFetch<AddressResponse>(
+    `/checkout/addresses/${addressId}/select${q({ tg_id, lang })}`,
+    { method: "PATCH" },
+  );
+}
+
+export async function selectRecipientDefault(
+  recipientId: number,
+  tg_id: number,
+  lang: Lang = "ru",
+) {
+  return apiFetch<RecipientResponse>(
+    `/checkout/recipients/${recipientId}/select${q({ tg_id, lang })}`,
+    { method: "PATCH" },
+  );
+}
+
+export async function adjustCartItem(
+  itemId: number,
+  tg_id: number,
+  body: { delta: number; step?: number | null; lang?: Lang },
+) {
+  return apiFetch<CartResponse>(
+    `/cart/items/${itemId}/adjust${q({ tg_id })}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        delta: body.delta,
+        step: body.step ?? null,
+        lang: body.lang ?? "ru",
+      }),
+    },
+  );
+}

@@ -9,13 +9,15 @@ import { useTelegramMainButton } from "@/hooks/useTelegramMainButton";
 import { SheetModal } from "@/app/components/ravonak/SheetModal";
 import { useToast } from "@/app/components/ravonak/ToastProvider";
 
+const SMS_TTL_SEC = 59;
+
 export function AuthSmsSheet() {
   const { userPhone, authStage, verifyOtp, tgId } = useRavonak();
   const { closeSheet, replaceSheet } = useAppSheets();
   const { showToast } = useToast();
   const [code, setCode] = useState("");
-  const [err, setErr] = useState(false);
-  const [sec, setSec] = useState(59);
+  const [err, setErr] = useState<string | null>(null);
+  const [sec, setSec] = useState(SMS_TTL_SEC);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -34,22 +36,35 @@ export function AuthSmsSheet() {
     return () => clearInterval(t);
   }, [sec]);
 
-  const canConfirm = !busy && code.length === 5;
+  const canConfirm = !busy && code.length === 5 && sec > 0;
 
   const submit = useCallback(async () => {
+    if (sec <= 0) {
+      setErr("Срок действия кода истёк. Запросите новый.");
+      return;
+    }
     setBusy(true);
     try {
-      const ok = await verifyOtp(code);
-      if (ok) {
+      const r = await verifyOtp(code);
+      if (r.ok) {
         showToast("Вы вошли в аккаунт");
         closeSheet();
       } else {
-        setErr(true);
+        const msg = r.error.toLowerCase();
+        if (
+          msg.includes("expired") ||
+          msg.includes("просроч") ||
+          msg.includes("истёк")
+        ) {
+          setErr("Код истёк. Запросите новый.");
+        } else {
+          setErr(r.error || "Код введён неверно");
+        }
       }
     } finally {
       setBusy(false);
     }
-  }, [code, verifyOtp, showToast, closeSheet]);
+  }, [code, verifyOtp, showToast, closeSheet, sec]);
 
   useTelegramMainButton(canConfirm, "Подтвердить", busy, submit);
 
@@ -65,13 +80,18 @@ export function AuthSmsSheet() {
         value={code}
         onChange={(e) => {
           setCode(e.target.value.replace(/\D/g, "").slice(0, 5));
-          setErr(false);
+          setErr(null);
         }}
         className="mb-2 w-full rounded-xl border border-[#eee] bg-[#eee] px-4 py-3 text-[20px] tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-[#046c6d]/30"
         placeholder="•••••"
       />
       {err ? (
-        <p className="mb-4 text-[14px] text-[#c83030]">Код введён неверно</p>
+        <p className="mb-4 text-[14px] text-[#c83030]">{err}</p>
+      ) : null}
+      {sec <= 0 ? (
+        <p className="mb-4 text-[14px] text-[#c83030]">
+          Срок действия кода истёк. Нажмите «Отправить код повторно».
+        </p>
       ) : null}
       <button
         type="button"
@@ -80,7 +100,9 @@ export function AuthSmsSheet() {
         onClick={async () => {
           const phone = normalizeUzPhone(userPhone);
           if (!phone || tgId == null) return;
-          setSec(59);
+          setSec(SMS_TTL_SEC);
+          setCode("");
+          setErr(null);
           const debug =
             typeof process !== "undefined" &&
             process.env.NEXT_PUBLIC_DEBUG_SMS === "1";

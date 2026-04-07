@@ -16,6 +16,8 @@ export function productFromApi(p: ProductSchema): Product {
     priceSum: hasDiscount ? p.old_price! : p.price,
     salePriceSum: hasDiscount ? p.price : undefined,
     weight: p.shelf_life?.trim() ? p.shelf_life : unitLabel(p.unit),
+    unit: p.unit,
+    discountPercentage: p.discount_percentage,
     imageUrl: p.image_url,
   };
 }

@@ -4,7 +4,9 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   assemblerActiveOrders,
+  assemblerCollectedOrders,
   staffAssembleOrder,
+  staffHandoverToCourier,
   staffOrderDetails,
   staffStartAssembly,
   type StaffOrderDetailsResponse,
@@ -20,15 +22,21 @@ export default function PickerPage() {
   const { tgId, authStage } = useRavonak();
   const { showToast } = useToast();
   const [orders, setOrders] = useState<StaffOrderListItem[]>([]);
+  const [collected, setCollected] = useState<StaffOrderListItem[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<StaffOrderDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [handoverConfirm, setHandoverConfirm] = useState<string | null>(null);
 
   async function reload() {
     if (tgId == null) return;
-    const r = await assemblerActiveOrders(tgId);
+    const [r, c] = await Promise.all([
+      assemblerActiveOrders(tgId),
+      assemblerCollectedOrders(tgId),
+    ]);
     setOrders(r.items ?? []);
+    setCollected(c.items ?? []);
   }
 
   useEffect(() => {
@@ -113,6 +121,31 @@ export default function PickerPage() {
           Нет заказов на сборку
         </p>
       ) : null}
+      {collected.length > 0 ? (
+        <div className="border-b border-[#eee] px-4 py-3">
+          <h3 className="mb-2 text-[14px] font-semibold text-[#151515]">
+            Собранные (ожидают передачи курьеру)
+          </h3>
+          <ul className="space-y-2">
+            {collected.map((o) => (
+              <li
+                key={o.order_number}
+                className="flex items-center justify-between rounded-xl border border-[#eee] px-3 py-2 text-[14px]"
+              >
+                <span className="font-medium">{o.order_number}</span>
+                <button
+                  type="button"
+                  className="text-[13px] font-medium text-[#046c6d]"
+                  onClick={() => setHandoverConfirm(o.order_number)}
+                >
+                  Передать курьеру
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {order ? (
         <>
           <div className="border-b border-[#eee] px-4 py-4">
@@ -219,6 +252,45 @@ export default function PickerPage() {
             )}
           </div>
         </>
+      ) : null}
+
+      {handoverConfirm ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4">
+          <div className="w-full max-w-[390px] rounded-2xl bg-white p-5 shadow-xl">
+            <p className="mb-6 text-center text-[17px] font-medium leading-snug">
+              Подтвердите передачу заказа курьеру
+            </p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                if (!tgId) return;
+                setBusy(true);
+                try {
+                  await staffHandoverToCourier(handoverConfirm, tgId, true);
+                  setHandoverConfirm(null);
+                  showToast("Заказ передан курьеру");
+                  await reload();
+                  setSelected(null);
+                } catch (e) {
+                  showToast(e instanceof Error ? e.message : "Ошибка");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              className="mb-3 w-full rounded-xl bg-[#046c6d] py-3 text-[16px] font-medium text-white disabled:opacity-50"
+            >
+              Подтвердить
+            </button>
+            <button
+              type="button"
+              onClick={() => setHandoverConfirm(null)}
+              className="w-full rounded-xl border border-[#eee] py-3 text-[16px]"
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
       ) : null}
     </div>
   );

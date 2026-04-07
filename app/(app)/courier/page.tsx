@@ -12,12 +12,12 @@ import { useRavonak } from "@/context/RavonakContext";
 import { PageHeader } from "@/app/components/ravonak/PageHeader";
 import { useToast } from "@/app/components/ravonak/ToastProvider";
 
-type Tab = "mine" | "active";
+type Tab = "done" | "active";
 
 export default function CourierPage() {
   const { userName, tgId, authStage } = useRavonak();
   const { showToast } = useToast();
-  const [tab, setTab] = useState<Tab>("mine");
+  const [tab, setTab] = useState<Tab>("active");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [activeList, setActiveList] = useState<StaffOrderListItem[]>([]);
   const [mineList, setMineList] = useState<StaffOrderListItem[]>([]);
@@ -52,7 +52,20 @@ export default function CourierPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tgId, authStage]);
 
-  const mine = useMemo(() => mineList, [mineList]);
+  const completed = useMemo(
+    () =>
+      mineList.filter((o) =>
+        /completed|delivered|done|заверш/i.test(o.status),
+      ),
+    [mineList],
+  );
+  const inProgress = useMemo(
+    () =>
+      mineList.filter(
+        (o) => !/completed|delivered|done|заверш/i.test(o.status),
+      ),
+    [mineList],
+  );
   const active = useMemo(() => activeList, [activeList]);
 
   if (authStage !== "verified" || tgId == null) {
@@ -74,9 +87,9 @@ export default function CourierPage() {
         <div className="mb-4 flex rounded-xl bg-[#eee] p-1">
           <button
             type="button"
-            onClick={() => setTab("mine")}
+            onClick={() => setTab("done")}
             className={`flex-1 rounded-lg py-2 text-[13px] font-medium ${
-              tab === "mine" ? "bg-white shadow-sm" : "text-[#949494]"
+              tab === "done" ? "bg-white shadow-sm" : "text-[#949494]"
             }`}
           >
             Мои заказы
@@ -96,8 +109,17 @@ export default function CourierPage() {
           <p className="py-8 text-center text-[#949494]">Загрузка…</p>
         ) : null}
 
-        {tab === "mine" && mine.length === 0 && !loading ? (
-          <div className="flex gap-3 rounded-xl bg-[#f5f5f5] p-4">
+        {tab === "done" &&
+        inProgress.length === 0 &&
+        completed.length === 0 &&
+        !loading ? (
+          <p className="mb-4 py-2 text-center text-[14px] text-[#949494]">
+            Пока нет заказов в работе и завершённых
+          </p>
+        ) : null}
+
+        {tab === "active" && active.length === 0 && !loading ? (
+          <div className="mb-4 flex gap-3 rounded-xl bg-[#f5f5f5] p-4">
             <span className="text-[32px] leading-none">!</span>
             <p className="text-[14px] leading-snug text-[#151515]">
               Примите заказ из вкладки активных заказов и начните работать.
@@ -105,59 +127,146 @@ export default function CourierPage() {
           </div>
         ) : null}
 
-        {(tab === "mine" ? mine : active).map((o) => (
-          <div
-            key={o.order_number}
-            className="mb-4 overflow-hidden rounded-2xl border border-[#eee] bg-white"
-          >
-            <div className="flex items-center justify-between border-b border-[#eee] px-4 py-3">
-              <span className="text-[16px] font-semibold">Заказ {o.order_number}</span>
-              <span className="text-[#949494]">›</span>
-            </div>
-            <div className="space-y-3 px-4 py-3 text-[14px]">
-              <div>
-                <p className="text-[12px] text-[#949494]">Получатель</p>
-                <p className="font-medium text-[#151515]">{o.recipient_name ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-[12px] text-[#949494]">Номер телефона</p>
-                <p className="font-medium text-[#151515]">{o.recipient_phone ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-[12px] text-[#949494]">Адрес доставки</p>
-                <p className="leading-snug text-[#151515]">{o.delivery_address ?? "—"}</p>
-              </div>
-            </div>
-            {tab === "active" ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await staffCourierAccept(o.order_number, tgId);
-                    showToast("Заказ принят");
-                    await reload();
-                  } catch (e) {
-                    showToast(e instanceof Error ? e.message : "Ошибка");
-                  }
-                }}
-                className="w-full border-t border-[#eee] py-3 text-[15px] font-medium text-[#046c6d]"
+        {tab === "done" && inProgress.length > 0 ? (
+          <p className="mb-2 text-[13px] font-medium text-[#151515]">В доставке</p>
+        ) : null}
+        {tab === "done"
+          ? inProgress.map((o) => (
+              <div
+                key={`ip-${o.order_number}`}
+                className="mb-4 overflow-hidden rounded-2xl border border-[#eee] bg-white"
               >
-                Принять заказ
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmId(o.order_number)}
-                className="w-full border-t border-[#eee] py-3 text-[15px] font-medium text-[#046c6d]"
+                <div className="flex items-center justify-between border-b border-[#eee] px-4 py-3">
+                  <span className="text-[16px] font-semibold">
+                    Заказ {o.order_number}
+                  </span>
+                  <span className="text-[12px] text-[#949494]">{o.status}</span>
+                </div>
+                <div className="space-y-3 px-4 py-3 text-[14px]">
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Получатель</p>
+                    <p className="font-medium text-[#151515]">
+                      {o.recipient_name ?? "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Номер телефона</p>
+                    <p className="font-medium text-[#151515]">
+                      {o.recipient_phone ?? "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Адрес доставки</p>
+                    <p className="leading-snug text-[#151515]">
+                      {o.delivery_address ?? "—"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setConfirmId(o.order_number)}
+                  className="w-full border-t border-[#eee] py-3 text-[15px] font-medium text-[#046c6d]"
+                >
+                  Заказ передан клиенту
+                </button>
+              </div>
+            ))
+          : null}
+
+        {tab === "done" && completed.length > 0 ? (
+          <p className="mb-2 mt-4 text-[13px] font-medium text-[#151515]">
+            Завершённые
+          </p>
+        ) : null}
+        {tab === "done"
+          ? completed.map((o) => (
+              <div
+                key={`done-${o.order_number}`}
+                className="mb-4 overflow-hidden rounded-2xl border border-[#eee] bg-white"
               >
-                Заказ передан клиенту
-              </button>
-            )}
-          </div>
-        ))}
+                <div className="flex items-center justify-between border-b border-[#eee] px-4 py-3">
+                  <span className="text-[16px] font-semibold">
+                    Заказ {o.order_number}
+                  </span>
+                  <span className="text-[12px] text-[#949494]">{o.status}</span>
+                </div>
+                <div className="space-y-3 px-4 py-3 text-[14px]">
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Получатель</p>
+                    <p className="font-medium text-[#151515]">
+                      {o.recipient_name ?? "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Номер телефона</p>
+                    <p className="font-medium text-[#151515]">
+                      {o.recipient_phone ?? "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Адрес доставки</p>
+                    <p className="leading-snug text-[#151515]">
+                      {o.delivery_address ?? "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          : null}
+
+        {tab === "active"
+          ? active.map((o) => (
+              <div
+                key={o.order_number}
+                className="mb-4 overflow-hidden rounded-2xl border border-[#eee] bg-white"
+              >
+                <div className="flex items-center justify-between border-b border-[#eee] px-4 py-3">
+                  <span className="text-[16px] font-semibold">
+                    Заказ {o.order_number}
+                  </span>
+                  <span className="text-[#949494]">›</span>
+                </div>
+                <div className="space-y-3 px-4 py-3 text-[14px]">
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Получатель</p>
+                    <p className="font-medium text-[#151515]">
+                      {o.recipient_name ?? "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Номер телефона</p>
+                    <p className="font-medium text-[#151515]">
+                      {o.recipient_phone ?? "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#949494]">Адрес доставки</p>
+                    <p className="leading-snug text-[#151515]">
+                      {o.delivery_address ?? "—"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await staffCourierAccept(o.order_number, tgId);
+                      showToast("Заказ принят");
+                      await reload();
+                    } catch (e) {
+                      showToast(e instanceof Error ? e.message : "Ошибка");
+                    }
+                  }}
+                  className="w-full border-t border-[#eee] py-3 text-[15px] font-medium text-[#046c6d]"
+                >
+                  Принять заказ
+                </button>
+              </div>
+            ))
+          : null}
 
         {tab === "active" && active.length === 0 && !loading ? (
-          <p className="py-8 text-center text-[#949494]">Нет активных заказов</p>
+          <p className="py-4 text-center text-[#949494]">Нет заказов в очереди</p>
         ) : null}
       </div>
 

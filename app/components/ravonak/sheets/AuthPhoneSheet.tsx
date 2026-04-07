@@ -1,25 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRavonak } from "@/context/RavonakContext";
+import { formatUzPhoneDisplay, isLikelyUzMobileInput } from "@/lib/phone";
 import { useAppSheets } from "@/hooks/useAppSheets";
 import { useTelegramMainButton } from "@/hooks/useTelegramMainButton";
 import { SheetModal } from "@/app/components/ravonak/SheetModal";
 import { useToast } from "@/app/components/ravonak/ToastProvider";
 
 export function AuthPhoneSheet() {
-  const { sendSmsCode, tgId, authStage } = useRavonak();
+  const { sendSmsCode, tgId, authStage, userPhone } = useRavonak();
   const { closeSheet, replaceSheet } = useAppSheets();
   const { showToast } = useToast();
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
+  const syncedFromContext = useRef(false);
 
   useEffect(() => {
     if (authStage === "verified") closeSheet();
   }, [authStage, closeSheet]);
 
+  useEffect(() => {
+    if (userPhone && !syncedFromContext.current) {
+      setPhone(formatUzPhoneDisplay(userPhone));
+      syncedFromContext.current = true;
+    }
+  }, [userPhone]);
+
   const canSubmit =
-    !busy && phone.trim().length >= 8 && tgId != null;
+    !busy && isLikelyUzMobileInput(phone) && tgId != null;
 
   const submit = useCallback(async () => {
     if (tgId == null) {
@@ -28,8 +37,8 @@ export function AuthPhoneSheet() {
       );
       return;
     }
-    if (phone.trim().length < 8) {
-      showToast("Введите корректный номер");
+    if (!isLikelyUzMobileInput(phone)) {
+      showToast("Введите номер телефона");
       return;
     }
     setBusy(true);

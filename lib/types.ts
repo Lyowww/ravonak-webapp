@@ -4,6 +4,9 @@ export type Product = {
   priceSum: number;
   salePriceSum?: number;
   weight: string;
+  /** API unit: `grams` | `pcs` | other */
+  unit?: string;
+  discountPercentage?: number;
   searchTerms?: string;
   imageUrl?: string | null;
 };

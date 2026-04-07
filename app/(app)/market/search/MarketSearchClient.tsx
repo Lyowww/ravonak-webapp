@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { searchProductsApi } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
+import { searchProductsApi, type ProductSearchItem } from "@/lib/api";
+import { displayChapterTitle } from "@/lib/display";
 import { productFromApi } from "@/lib/product-map";
 import type { Product } from "@/lib/types";
 import { useRavonak } from "@/context/RavonakContext";
@@ -12,26 +13,42 @@ import { PageHeader } from "@/app/components/ravonak/PageHeader";
 import { ProductCard } from "@/app/components/ravonak/ProductCard";
 import { useToast } from "@/app/components/ravonak/ToastProvider";
 
+type ChipFilter = "all" | number;
+
 export default function MarketSearchClient() {
   const router = useRouter();
   const sp = useSearchParams();
   const q = sp.get("q") ?? "";
-  const [list, setList] = useState<Product[]>([]);
+  const chapterIdRaw = sp.get("chapter_id");
+  const chapterId = chapterIdRaw ? Number(chapterIdRaw) : null;
+  const [raw, setRaw] = useState<ProductSearchItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chip, setChip] = useState<ChipFilter>("all");
   const { addToCart, authStage } = useRavonak();
   const { openSheet } = useAppSheets();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    setChip("all");
+  }, [q, chapterIdRaw]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     (async () => {
       try {
-        const r = await searchProductsApi({ q, limit: 80 });
+        const r = await searchProductsApi({
+          q,
+          limit: 100,
+          chapter_id:
+            chapterId != null && Number.isFinite(chapterId) && chapterId > 0
+              ? chapterId
+              : undefined,
+        });
         if (cancelled) return;
-        setList(r.map(productFromApi));
+        setRaw(r);
       } catch {
-        if (!cancelled) setList([]);
+        if (!cancelled) setRaw([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -39,18 +56,79 @@ export default function MarketSearchClient() {
     return () => {
       cancelled = true;
     };
-  }, [q]);
+  }, [q, chapterId]);
+
+  const chips = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of raw) {
+      if (!map.has(p.subcategory_id)) {
+        map.set(p.subcategory_id, p.subcategory_name);
+      }
+    }
+    return Array.from(map.entries()).sort((a, b) =>
+      a[1].localeCompare(b[1], "ru"),
+    );
+  }, [raw]);
+
+  const list: Product[] = useMemo(() => {
+    let rows = raw;
+    if (chip !== "all") {
+      rows = raw.filter((p) => p.subcategory_id === chip);
+    }
+    return rows.map(productFromApi);
+  }, [raw, chip]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/market" title="Поиск" />
+      <PageHeader
+        backHref={
+          chapterId != null && Number.isFinite(chapterId) && chapterId > 0
+            ? `/market/chapter/${chapterId}`
+            : "/market"
+        }
+        title="Поиск"
+      />
+      {chapterId != null && Number.isFinite(chapterId) && chips.length > 0 ? (
+        <div className="sticky top-0 z-20 border-b border-[#eee] bg-white/95 px-4 py-2 backdrop-blur-sm">
+          <p className="mb-2 text-[12px] text-[#949494]">Подкатегории</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={() => setChip("all")}
+              className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-medium ${
+                chip === "all"
+                  ? "bg-[#046c6d] text-white"
+                  : "bg-[#eee] text-[#151515]"
+              }`}
+            >
+              Все
+            </button>
+            {chips.map(([id, name]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setChip(id)}
+                className={`max-w-[220px] shrink-0 truncate rounded-full px-4 py-2 text-[13px] font-medium ${
+                  chip === id
+                    ? "bg-[#046c6d] text-white"
+                    : "bg-[#eee] text-[#151515]"
+                }`}
+              >
+                {displayChapterTitle(name)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div className="px-4 pt-3">
         <p className="mb-3 text-[13px] text-[#949494]">
           {loading
             ? "Поиск…"
             : q
               ? `Результаты: «${q}»`
-              : "Все товары"}
+              : chapterId
+                ? "Товары раздела"
+                : "Все товары"}
         </p>
         <div className="-mx-2 flex flex-wrap justify-center gap-3 pb-4">
           {list.map((p) => (

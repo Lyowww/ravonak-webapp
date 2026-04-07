@@ -73,7 +73,9 @@ type Ctx = RavonakState & {
   sumPerUsd: number;
   setPendingPhone: (phoneE164: string) => void;
   sendSmsCode: (rawPhone: string) => Promise<boolean>;
-  verifyOtp: (code: string) => Promise<boolean>;
+  verifyOtp: (
+    code: string,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
   logout: () => void;
   refreshMainScreen: () => Promise<void>;
   refreshCart: () => Promise<void>;
@@ -206,11 +208,13 @@ export function RavonakProvider({ children }: { children: React.ReactNode }) {
   );
 
   const verifyOtp = useCallback(
-    async (code: string) => {
+    async (
+      code: string,
+    ): Promise<{ ok: true } | { ok: false; error: string }> => {
       const id = tgId ?? resolveTgId();
-      if (id == null) return false;
+      if (id == null) return { ok: false, error: "Нет Telegram ID" };
       const phone = normalizeUzPhone(state.userPhone);
-      if (!phone) return false;
+      if (!phone) return { ok: false, error: "Неверный номер телефона" };
       const tgUser =
         typeof window !== "undefined"
           ? (
@@ -229,31 +233,37 @@ export function RavonakProvider({ children }: { children: React.ReactNode }) {
               }
             ).Telegram?.WebApp?.initDataUnsafe?.user
           : undefined;
-      const r = await authVerifyCode({
-        phone_number: phone,
-        code,
-        tg_id: id,
-        name: tgUser?.first_name ?? "User",
-        surname: tgUser?.last_name ?? null,
-        username: tgUser?.username ?? null,
-      });
-      if (r.success) {
-        setIsRegistered(true);
-        const main = await getMainScreen(id);
-        const cart = await getCart(id);
-        setState((s) => ({
-          ...s,
-          authStage: "verified",
-          userName: main.user_name,
-          userPhone: r.phone_number ?? phone,
-          balanceUsd: main.balance_usd,
-          cart: mapCartItems(cart.items),
-          mainScreen: main,
-          role: r.role ?? null,
-        }));
-        return true;
+      try {
+        const r = await authVerifyCode({
+          phone_number: phone,
+          code,
+          tg_id: id,
+          name: tgUser?.first_name ?? "User",
+          surname: tgUser?.last_name ?? null,
+          username: tgUser?.username ?? null,
+        });
+        if (r.success) {
+          setIsRegistered(true);
+          const main = await getMainScreen(id);
+          const cart = await getCart(id);
+          setState((s) => ({
+            ...s,
+            authStage: "verified",
+            userName: main.user_name,
+            userPhone: r.phone_number ?? phone,
+            balanceUsd: main.balance_usd,
+            cart: mapCartItems(cart.items),
+            mainScreen: main,
+            role: r.role ?? null,
+          }));
+          return { ok: true };
+        }
+        return { ok: false, error: r.message || "Код не принят" };
+      } catch (e) {
+        const msg =
+          e instanceof Error ? e.message : "Не удалось подтвердить код";
+        return { ok: false, error: msg };
       }
-      return false;
     },
     [tgId, state.userPhone],
   );

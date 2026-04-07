@@ -10,6 +10,7 @@ import type { Product } from "@/lib/types";
 import { useRavonak } from "@/context/RavonakContext";
 import { useAppSheets } from "@/hooks/useAppSheets";
 import { figma } from "./assets";
+import { CartBar } from "./CartBar";
 import { ProductCard } from "./ProductCard";
 import { PromoBanner } from "./PromoBanner";
 import { ServiceTile } from "./ServiceTile";
@@ -124,16 +125,11 @@ export function HomeScreen() {
       list.push(productFromApi(p));
     }
     for (const p of m.random_products) {
-      if (list.length >= 8) break;
+      if (list.length >= 15) break;
       list.push(productFromApi(p));
     }
-    return list;
+    return list.slice(0, 15);
   }, [main]);
-
-  const saleRow = useMemo(
-    () => promoRow.filter((p) => p.salePriceSum != null).slice(0, 8),
-    [promoRow],
-  );
 
   const displayName =
     authStage === "verified" ? userName || "Пользователь" : "Гость";
@@ -151,8 +147,8 @@ export function HomeScreen() {
   );
 
   return (
-    <div className="relative min-h-0 flex-1 bg-white">
-      <div className="relative px-6 pb-8 pt-3">
+    <div className="relative flex min-h-0 flex-1 flex-col bg-white">
+      <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-4 pt-3">
         {activeOrder?.order_number ? (
           <button
             type="button"
@@ -274,23 +270,23 @@ export function HomeScreen() {
               ]}
         </div>
 
-        <div className="relative -mx-2 mb-5 h-[154px] w-[calc(100%+1rem)] overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth [-webkit-overflow-scrolling:touch]">
-          <div className="flex w-max snap-x snap-mandatory gap-4 px-[calc(50%-179px)] pb-2 pt-0">
+        <div className="relative -mx-2 mb-5 h-[min(154px,22vw)] min-h-[120px] w-[calc(100%+1rem)] overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth [-webkit-overflow-scrolling:touch]">
+          <div className="flex w-max snap-x snap-mandatory gap-4 px-4 pb-2 pt-0 sm:px-[calc(50%-min(179px,45vw))]">
             {main && main.banners.length > 0
-              ? main.banners.map((b) => (
+              ? main.banners.slice(0, 3).map((b) => (
                   <div
                     key={b.id}
-                    className="relative h-[154px] w-[358px] shrink-0 snap-center overflow-hidden rounded-2xl bg-[#c4d209]"
+                    className="pointer-events-none relative h-[min(154px,22vw)] min-h-[120px] w-[min(358px,85vw)] shrink-0 snap-center overflow-hidden rounded-2xl bg-[#c4d209]"
                   >
                     <Image
                       src={b.image_url}
                       alt=""
                       fill
                       className="object-cover"
-                      sizes="358px"
+                      sizes="(max-width:640px) 85vw, 358px"
                       unoptimized
                     />
-                    <div className="absolute left-5 top-5 z-[1] max-w-[200px] text-white">
+                    <div className="pointer-events-none absolute left-5 top-5 z-[1] max-w-[200px] text-white">
                       {b.title ? (
                         <p className="text-[18px] font-bold leading-tight">{b.title}</p>
                       ) : null}
@@ -300,37 +296,13 @@ export function HomeScreen() {
                     </div>
                   </div>
                 ))
-              : [
-                  <div key="p1" className="snap-center shrink-0">
-                    <PromoBanner
-                      showBuy
-                      onBuy={() => {
-                        const first = promoRow[0];
-                        if (!first) {
-                          showToast("Нет товаров");
-                          return;
-                        }
-                        addWithAuth(Number(first.id));
-                      }}
-                    />
-                  </div>,
-                  <div key="p2" className="snap-center shrink-0">
+              : (
+                  ["p1", "p2", "p3"] as const
+                ).map((k) => (
+                  <div key={k} className="pointer-events-none snap-center shrink-0">
                     <PromoBanner />
-                  </div>,
-                  <div key="p3" className="snap-center shrink-0">
-                    <PromoBanner
-                      showBuy
-                      onBuy={() => {
-                        const first = promoRow[0];
-                        if (!first) {
-                          showToast("Нет товаров");
-                          return;
-                        }
-                        addWithAuth(Number(first.id));
-                      }}
-                    />
-                  </div>,
-                ]}
+                  </div>
+                ))}
           </div>
         </div>
 
@@ -359,7 +331,7 @@ export function HomeScreen() {
           </div>
 
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {promoRow.slice(0, 8).map((p) => (
+            {promoRow.map((p) => (
               <ProductCard
                 key={p.id}
                 product={p}
@@ -368,37 +340,6 @@ export function HomeScreen() {
               />
             ))}
           </div>
-        </div>
-
-        <Link
-          href="/catalog"
-          className="relative mb-5 flex h-[93px] w-full max-w-[358px] overflow-hidden rounded-xl bg-[#fb0] active:opacity-95"
-        >
-          <div className="absolute left-3 top-2.5 text-left text-[24px] font-black leading-none text-white">
-            <span className="block">Каталог</span>
-            <span className="block">акций</span>
-          </div>
-          <div className="pointer-events-none absolute -top-[22px] right-0 h-[167px] w-[251px]">
-            <Image
-              src={figma.catalog}
-              alt=""
-              fill
-              className="object-cover object-left"
-              sizes="251px"
-            />
-          </div>
-        </Link>
-
-        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {(saleRow.length > 0 ? saleRow : promoRow).slice(0, 6).map((p) => (
-            <ProductCard
-              key={`sale-${p.id}`}
-              product={p}
-              sale
-              onOpen={() => router.push(`/market/product/${p.id}`)}
-              onAddToCart={() => addWithAuth(Number(p.id))}
-            />
-          ))}
         </div>
 
         <nav className="flex flex-col gap-2 border-t border-[#eee] pt-4 text-center text-[13px] text-[#046c6d]">
@@ -411,6 +352,9 @@ export function HomeScreen() {
               Регистрация / вход
             </button>
           ) : null}
+          <Link href="/orders" className="py-1 underline-offset-2 hover:underline">
+            Мои заказы
+          </Link>
           <Link href="/courier" className="py-1 underline-offset-2 hover:underline">
             Курьер
           </Link>
@@ -428,6 +372,7 @@ export function HomeScreen() {
           ) : null}
         </nav>
       </div>
+      <CartBar backHref="/" />
     </div>
   );
 }

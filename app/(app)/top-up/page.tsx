@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { figma } from "@/app/components/ravonak/assets";
+import { PageHeader } from "@/app/components/ravonak/PageHeader";
 
 const COUNTRIES = [
   { id: "us", label: "США" },
@@ -13,14 +14,8 @@ const COUNTRIES = [
 export default function TopUpPage() {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col bg-white">
-      <Link
-        href="/"
-        className="absolute right-4 top-4 z-10 text-[24px] leading-none text-[#151515] opacity-50"
-        aria-label="Закрыть"
-      >
-        ×
-      </Link>
-      <div className="flex flex-1 flex-col px-4 pb-8 pt-12">
+      <PageHeader backHref="/" title="Пополнение" />
+      <div className="flex flex-1 flex-col px-4 pb-8 pt-4">
         <div className="relative mx-auto mb-4 h-[200px] w-full max-w-[313px] overflow-hidden rounded-2xl bg-[#eee]">
           <Image
             src={figma.money}
