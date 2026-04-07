@@ -16,6 +16,7 @@ export function ServiceTile({
 }: ServiceTileProps) {
   const className =
     "flex w-full max-w-[165px] flex-col items-center gap-1 active:opacity-90";
+  const remote = imageSrc.startsWith("http");
   const inner = (
     <>
       <div className="relative h-[54px] w-full overflow-hidden rounded-2xl bg-[#eee]">
@@ -27,6 +28,7 @@ export function ServiceTile({
               fill
               className="object-cover object-top"
               sizes="165px"
+              unoptimized={remote}
             />
           </div>
         </div>

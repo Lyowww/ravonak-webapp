@@ -8,9 +8,10 @@ import { useToast } from "./ToastProvider";
 
 export function RegisterScreen() {
   const router = useRouter();
-  const { setPendingPhone } = useRavonak();
+  const { sendSmsCode, tgId } = useRavonak();
   const { showToast } = useToast();
   const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col bg-white">
@@ -31,7 +32,7 @@ export function RegisterScreen() {
             type="tel"
             inputMode="tel"
             autoComplete="tel"
-            placeholder="Номер телефона"
+            placeholder="+998 __ ___ __ __"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="w-full bg-transparent text-[16px] font-normal text-[#151515] placeholder:text-[#949494] focus:outline-none"
@@ -40,16 +41,32 @@ export function RegisterScreen() {
         <div className="sticky bottom-0 bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6">
           <button
             type="button"
-            onClick={() => {
+            disabled={busy}
+            onClick={async () => {
+              if (tgId == null) {
+                showToast(
+                  "Откройте мини-приложение в Telegram или задайте NEXT_PUBLIC_DEV_TG_ID для локальной разработки",
+                );
+                return;
+              }
               if (phone.trim().length < 8) {
                 showToast("Введите корректный номер");
                 return;
               }
-              setPendingPhone(phone.trim());
-              showToast("Код отправлен (демо)");
-              router.push("/verify");
+              setBusy(true);
+              try {
+                const ok = await sendSmsCode(phone.trim());
+                if (ok) {
+                  showToast("Код отправлен");
+                  router.push("/verify");
+                } else {
+                  showToast("Не удалось отправить код");
+                }
+              } finally {
+                setBusy(false);
+              }
             }}
-            className="flex h-[60px] w-full max-w-[366px] items-center justify-center rounded-2xl bg-[#046c6d] active:opacity-90"
+            className="flex h-[60px] w-full max-w-[366px] items-center justify-center rounded-2xl bg-[#046c6d] active:opacity-90 disabled:opacity-50"
           >
             <span className="text-[18px] font-medium text-white">
               Отправить код

@@ -2,39 +2,59 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import { getProduct } from "@/lib/catalog";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getProductById } from "@/lib/api";
+import { productFromApi } from "@/lib/product-map";
+import type { Product } from "@/lib/types";
 import { formatSum } from "@/lib/format";
 import { useRavonak } from "@/context/RavonakContext";
 import { figma } from "@/app/components/ravonak/assets";
 import { PageHeader } from "@/app/components/ravonak/PageHeader";
 import { useToast } from "@/app/components/ravonak/ToastProvider";
 
-type Mode = "default" | "units" | "grams";
-
 export default function ProductPageClient() {
   const params = useParams();
   const router = useRouter();
-  const s = useSearchParams();
-  const id = params.id as string;
-  const p = getProduct(id);
-  const { addToCart } = useRavonak();
+  const id = Number(params.id as string);
+  const { addToCart, authStage } = useRavonak();
   const { showToast } = useToast();
   const [qty, setQty] = useState(1);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const mode = (s.get("mode") as Mode) || "default";
-  const setMode = (m: Mode) => {
-    router.replace(`/market/product/${id}?mode=${m}`);
-  };
+  useEffect(() => {
+    if (!Number.isFinite(id) || id <= 0) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await getProductById(id);
+        if (cancelled) return;
+        setProduct(productFromApi(raw));
+      } catch {
+        if (!cancelled) setProduct(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
-  const variantForAdd = useMemo(() => {
-    if (mode === "grams") return "400г";
-    if (mode === "units") return "1 шт";
-    return undefined;
-  }, [mode]);
+  if (loading) {
+    return (
+      <div className="flex flex-1 flex-col bg-white p-6">
+        <PageHeader backHref="/market" />
+        <p className="pt-8 text-center text-[#949494]">Загрузка…</p>
+      </div>
+    );
+  }
 
-  if (!p) {
+  if (!product) {
     return (
       <div className="p-6">
         <PageHeader backHref="/market" />
@@ -43,42 +63,35 @@ export default function ProductPageClient() {
     );
   }
 
+  const p = product;
   const price = p.salePriceSum ?? p.priceSum;
   const showOld = Boolean(p.salePriceSum);
+  const remoteUrl = p.imageUrl?.startsWith("http") ? p.imageUrl : null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white pb-24">
       <PageHeader backHref="/market" title="Товар" />
       <div className="relative mx-4 mt-2 aspect-square max-h-[320px] overflow-hidden rounded-2xl bg-[#eee]">
-        <Image
-          src={figma.product}
-          alt=""
-          fill
-          className="object-contain p-6"
-          sizes="320px"
-        />
+        {remoteUrl ? (
+          <Image
+            src={remoteUrl}
+            alt=""
+            fill
+            className="object-contain p-6"
+            sizes="320px"
+            unoptimized
+          />
+        ) : (
+          <Image
+            src={figma.product}
+            alt=""
+            fill
+            className="object-contain p-6"
+            sizes="320px"
+          />
+        )}
       </div>
       <div className="px-4 pt-4">
-        <div className="mb-4 flex rounded-xl bg-[#eee] p-1">
-          {(
-            [
-              ["default", "Карточка"],
-              ["units", "Штуки"],
-              ["grams", "Граммы"],
-            ] as const
-          ).map(([m, label]) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className={`flex-1 rounded-lg py-2 text-[12px] font-medium ${
-                mode === m ? "bg-white text-[#151515] shadow-sm" : "text-[#949494]"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
         <h2 className="text-[20px] font-bold leading-tight text-[#151515]">
           {p.title}
         </h2>
@@ -127,7 +140,12 @@ export default function ProductPageClient() {
             type="button"
             className="flex flex-[2] items-center justify-center rounded-xl bg-[#046c6d] py-3 text-[14px] font-medium text-white active:opacity-90"
             onClick={() => {
-              addToCart(p.id, qty, variantForAdd);
+              if (authStage !== "verified") {
+                showToast("Зарегистрируйтесь, чтобы купить");
+                router.push("/register");
+                return;
+              }
+              void addToCart(id, qty);
               showToast("Добавлено в корзину");
             }}
           >

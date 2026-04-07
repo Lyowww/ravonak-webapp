@@ -5,15 +5,17 @@ export type Product = {
   salePriceSum?: number;
   weight: string;
   searchTerms?: string;
+  imageUrl?: string | null;
 };
 
 export type CartLine = {
-  productId: string;
+  basketItemId: number;
+  productId: number;
+  productName: string;
+  unit: string;
   qty: number;
-  /** e.g. "250 г", "400г", "1 шт" */
-  variantLabel: string;
-  /** price per line item in сум (after qty) */
   lineTotalSum: number;
+  imageUrl?: string | null;
 };
 
 export type TransferRecord = {
@@ -45,5 +47,11 @@ export type Order = {
   address: string;
   itemsCount: number;
   totalSum: number;
-  lines: { productId: string; title: string; priceSum: number; weight: string; qty: number }[];
+  lines: {
+    productId: string;
+    title: string;
+    priceSum: number;
+    weight: string;
+    qty: number;
+  }[];
 };

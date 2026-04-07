@@ -38,14 +38,14 @@ export default function TopUpOperatorClient() {
         </h1>
         <button
           type="button"
-          onClick={() => showToast("Звонок оператора — Swagger")}
+          onClick={() => showToast("Звонок оператору скоро будет доступен")}
           className="mb-3 flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-[#046c6d] text-[16px] font-medium text-white active:opacity-90"
         >
           Позвонить оператору
         </button>
         <button
           type="button"
-          onClick={() => showToast("Чат с оператором — Swagger")}
+          onClick={() => showToast("Чат с оператором скоро будет доступен")}
           className="flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-[#046c6d] text-[16px] font-medium text-white active:opacity-90"
         >
           Написать оператору

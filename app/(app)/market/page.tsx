@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import { PRODUCTS } from "@/lib/catalog";
+import { useCallback, useEffect, useState } from "react";
+import { searchProductsApi } from "@/lib/api";
+import { productFromApi } from "@/lib/product-map";
+import type { Product } from "@/lib/types";
 import { useRavonak } from "@/context/RavonakContext";
 import { figma } from "@/app/components/ravonak/assets";
 import { CartBar } from "@/app/components/ravonak/CartBar";
@@ -14,8 +16,25 @@ import { useToast } from "@/app/components/ravonak/ToastProvider";
 export default function MarketPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { addToCart } = useRavonak();
+  const { addToCart, authStage } = useRavonak();
   const [q, setQ] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await searchProductsApi({ q: "", limit: 60 });
+        if (cancelled) return;
+        setProducts(r.map(productFromApi));
+      } catch {
+        if (!cancelled) setProducts([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const submitSearch = useCallback(() => {
     const t = q.trim();
@@ -23,6 +42,18 @@ export default function MarketPage() {
       t ? `/market/search?q=${encodeURIComponent(t)}` : "/market/search",
     );
   }, [q, router]);
+
+  const add = useCallback(
+    (id: number) => {
+      if (authStage !== "verified") {
+        showToast("Зарегистрируйтесь, чтобы купить");
+        return;
+      }
+      void addToCart(id, 1);
+      showToast("В корзине");
+    },
+    [addToCart, authStage, showToast],
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
@@ -47,15 +78,12 @@ export default function MarketPage() {
           </label>
         </div>
         <div className="-mx-2 flex flex-wrap justify-center gap-3">
-          {PRODUCTS.map((p) => (
+          {products.map((p) => (
             <ProductCard
               key={p.id}
               product={p}
               onOpen={() => router.push(`/market/product/${p.id}`)}
-              onAddToCart={() => {
-                addToCart(p.id, 1);
-                showToast("В корзине");
-              }}
+              onAddToCart={() => add(Number(p.id))}
             />
           ))}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { getProduct } from "@/lib/catalog";
+import Image from "next/image";
 import { formatSum } from "@/lib/format";
 import { useRavonak } from "@/context/RavonakContext";
 import { PageHeader } from "@/app/components/ravonak/PageHeader";
@@ -13,13 +13,29 @@ export default function CartPage() {
     cartTotalSum,
     cartTotalUsd,
     balanceUsd,
-    canCheckout,
+    authStage,
     setCartQty,
     removeCartLine,
-    checkoutCart,
     clearCart,
   } = useRavonak();
   const { showToast } = useToast();
+
+  if (authStage !== "verified") {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col bg-white px-4 pt-8">
+        <PageHeader backHref="/market" title="Корзина" />
+        <p className="mt-6 text-center text-[#949494]">
+          Войдите через регистрацию, чтобы пользоваться корзиной.
+        </p>
+        <Link
+          href="/register"
+          className="mt-6 text-center text-[15px] font-medium text-[#046c6d] underline"
+        >
+          Регистрация
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white pb-28">
@@ -29,51 +45,61 @@ export default function CartPage() {
           <p className="py-12 text-center text-[#949494]">Корзина пуста</p>
         ) : (
           <ul className="space-y-3">
-            {cart.map((line, i) => {
-              const p = getProduct(line.productId);
-              return (
-                <li
-                  key={`${line.productId}-${line.variantLabel}-${i}`}
-                  className="flex gap-3 rounded-xl border border-[#eee] p-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-medium text-[#151515]">
-                      {p?.title ?? line.productId}
-                    </p>
-                    <p className="text-[12px] text-[#949494]">{line.variantLabel}</p>
-                    <p className="mt-1 text-[14px] font-bold">
-                      {formatSum(line.lineTotalSum)} сум
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="size-8 rounded-lg bg-[#eee] text-[16px]"
-                        onClick={() => setCartQty(i, line.qty - 1)}
-                      >
-                        −
-                      </button>
-                      <span className="w-6 text-center text-[14px]">{line.qty}</span>
-                      <button
-                        type="button"
-                        className="size-8 rounded-lg bg-[#eee] text-[16px]"
-                        onClick={() => setCartQty(i, line.qty + 1)}
-                      >
-                        +
-                      </button>
-                    </div>
+            {cart.map((line, i) => (
+              <li
+                key={line.basketItemId}
+                className="flex gap-3 rounded-xl border border-[#eee] p-3"
+              >
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-[#eee]">
+                  {line.imageUrl?.startsWith("http") ? (
+                    <Image
+                      src={line.imageUrl}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-medium text-[#151515]">
+                    {line.productName}
+                  </p>
+                  <p className="text-[12px] text-[#949494]">
+                    {line.unit} · {line.qty}
+                  </p>
+                  <p className="mt-1 text-[14px] font-bold">
+                    {formatSum(line.lineTotalSum)} сум
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="text-[12px] text-[#c83030]"
-                      onClick={() => removeCartLine(i)}
+                      className="size-8 rounded-lg bg-[#eee] text-[16px]"
+                      onClick={() => void setCartQty(i, line.qty - 1)}
                     >
-                      Удалить
+                      −
+                    </button>
+                    <span className="w-6 text-center text-[14px]">{line.qty}</span>
+                    <button
+                      type="button"
+                      className="size-8 rounded-lg bg-[#eee] text-[16px]"
+                      onClick={() => void setCartQty(i, line.qty + 1)}
+                    >
+                      +
                     </button>
                   </div>
-                </li>
-              );
-            })}
+                  <button
+                    type="button"
+                    className="text-[12px] text-[#c83030]"
+                    onClick={() => void removeCartLine(i)}
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </li>
+            ))}
           </ul>
         )}
         {cart.length > 0 ? (
@@ -81,7 +107,7 @@ export default function CartPage() {
             type="button"
             className="mt-4 text-[13px] text-[#046c6d]"
             onClick={() => {
-              clearCart();
+              void clearCart();
               showToast("Корзина очищена");
             }}
           >
@@ -98,21 +124,12 @@ export default function CartPage() {
           <p className="mb-3 text-[18px] font-bold text-[#151515]">
             Итого: {formatSum(cartTotalSum)} сум
           </p>
-          <button
-            type="button"
-            disabled={!canCheckout}
-            onClick={() => {
-              if (!canCheckout) {
-                showToast("Недостаточно средств на балансе");
-                return;
-              }
-              checkoutCart();
-              showToast("Заказ оформлен — сборщик увидит его в приложении");
-            }}
-            className="mb-2 w-full rounded-xl bg-[#046c6d] py-3 text-[16px] font-medium text-white disabled:opacity-40"
+          <Link
+            href="/market/checkout"
+            className="mb-2 flex w-full items-center justify-center rounded-xl bg-[#046c6d] py-3 text-[16px] font-medium text-white active:opacity-90"
           >
             Оформить заказ
-          </button>
+          </Link>
           <Link
             href="/market"
             className="block w-full py-2 text-center text-[14px] text-[#046c6d]"

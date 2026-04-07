@@ -3,18 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { useRavonak } from "@/context/RavonakContext";
 import { figma } from "@/app/components/ravonak/assets";
 import { useToast } from "@/app/components/ravonak/ToastProvider";
 
 const PLANS = ["Базовый", "Семейный", "Безлимит"];
 
 export default function SimPage() {
-  const { addSimCard } = useRavonak();
   const { showToast } = useToast();
   const [phone, setPhone] = useState("");
   const [plan, setPlan] = useState(PLANS[0]!);
   const [open, setOpen] = useState(false);
+  const [saved, setSaved] = useState<{ phone: string; plan: string }[]>([]);
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col bg-white">
@@ -79,13 +78,23 @@ export default function SimPage() {
               showToast("Укажите номер SIM");
               return;
             }
-            addSimCard(phone.trim(), plan);
-            showToast("SIM сохранена локально — далее Swagger");
+            setSaved((s) => [...s, { phone: phone.trim(), plan }]);
+            showToast("Заявка сохранена на этом устройстве");
+            setPhone("");
           }}
           className="mt-auto flex h-[60px] w-full items-center justify-center rounded-2xl bg-[#046c6d] text-[16px] font-medium text-white active:opacity-90"
         >
           Добавить SIM-карту
         </button>
+        {saved.length > 0 ? (
+          <ul className="mt-6 space-y-2 border-t border-[#eee] pt-4 text-[13px] text-[#949494]">
+            {saved.map((x, i) => (
+              <li key={`${x.phone}-${i}`}>
+                {x.phone} · {x.plan}
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </div>
   );

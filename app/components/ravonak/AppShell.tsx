@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRavonak } from "@/context/RavonakContext";
 
 type TgWebApp = {
   ready: () => void;
@@ -23,6 +24,8 @@ function getTelegramWebApp(): TgWebApp | undefined {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { ready } = useRavonak();
+
   useEffect(() => {
     const tw = getTelegramWebApp();
     tw?.ready();
@@ -47,6 +50,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     tw?.setHeaderColor?.("#ffffff");
     tw?.setBackgroundColor?.("#d1d1d6");
   }, []);
+
+  if (!ready) {
+    return (
+      <div className="ravonak-app flex min-h-dvh flex-col items-center justify-center bg-[#d1d1d6] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="text-[12px] text-[#949494]">Загрузка…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="ravonak-app flex min-h-dvh flex-col justify-center bg-[#d1d1d6] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">

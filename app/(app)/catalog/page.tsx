@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { PRODUCTS } from "@/lib/catalog";
+import { useEffect, useState } from "react";
+import { searchProductsApi } from "@/lib/api";
+import { productFromApi } from "@/lib/product-map";
+import type { Product } from "@/lib/types";
 import { useRavonak } from "@/context/RavonakContext";
 import { figma } from "@/app/components/ravonak/assets";
 import { PageHeader } from "@/app/components/ravonak/PageHeader";
@@ -11,9 +14,26 @@ import { useToast } from "@/app/components/ravonak/ToastProvider";
 
 export default function CatalogPage() {
   const router = useRouter();
-  const { addToCart } = useRavonak();
+  const { addToCart, authStage } = useRavonak();
   const { showToast } = useToast();
-  const onSale = PRODUCTS.filter((p) => p.salePriceSum);
+  const [onSale, setOnSale] = useState<Product[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await searchProductsApi({ q: "", limit: 120 });
+        if (cancelled) return;
+        const mapped = r.map(productFromApi);
+        setOnSale(mapped.filter((p) => p.salePriceSum != null));
+      } catch {
+        if (!cancelled) setOnSale([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
@@ -40,7 +60,11 @@ export default function CatalogPage() {
             sale
             onOpen={() => router.push(`/market/product/${p.id}`)}
             onAddToCart={() => {
-              addToCart(p.id, 1);
+              if (authStage !== "verified") {
+                showToast("Зарегистрируйтесь, чтобы купить");
+                return;
+              }
+              void addToCart(Number(p.id), 1);
               showToast("В корзине");
             }}
           />

@@ -19,10 +19,12 @@ export function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const sale = saleProp ?? Boolean(product?.salePriceSum);
-  const title = product?.title ?? "Сыр President рассольный Greco";
-  const weight = product?.weight ?? "250 г";
-  const price = product?.priceSum ?? 41_990;
-  const salePrice = product?.salePriceSum ?? 38_490;
+  const title = product?.title ?? "Товар";
+  const weight = product?.weight ?? "";
+  const price = product?.priceSum ?? 0;
+  const salePrice = product?.salePriceSum ?? price;
+  const remoteUrl =
+    product?.imageUrl?.startsWith("http") ? product.imageUrl : null;
 
   return (
     <div
@@ -67,6 +69,15 @@ export function ProductCard({
                 className="object-contain"
               />
             </div>
+          ) : remoteUrl ? (
+            <Image
+              src={remoteUrl}
+              alt=""
+              fill
+              className="object-contain p-1"
+              sizes="106px"
+              unoptimized
+            />
           ) : (
             <Image
               src={figma.product}
@@ -96,9 +107,11 @@ export function ProductCard({
           <span className="line-clamp-3 text-[12px] font-normal leading-[1.3] tracking-[0.12px] text-[#151515]">
             {title}
           </span>
-          <span className="text-[11px] font-normal leading-[1.3] tracking-[0.11px] text-[#949494]">
-            {weight}
-          </span>
+          {weight ? (
+            <span className="text-[11px] font-normal leading-[1.3] tracking-[0.11px] text-[#949494]">
+              {weight}
+            </span>
+          ) : null}
         </div>
       </div>
     </div>

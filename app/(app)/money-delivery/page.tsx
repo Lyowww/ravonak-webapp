@@ -32,7 +32,7 @@ export default function MoneyDeliveryPage() {
         </h1>
         <button
           type="button"
-          onClick={() => showToast("Звонок: интеграция телефонии / Swagger")}
+          onClick={() => showToast("Звонок оператору скоро будет доступен")}
           className="mb-3 flex h-[60px] w-full items-center justify-center gap-3 rounded-2xl bg-[#046c6d] text-[16px] font-medium text-white active:opacity-90"
         >
           <PhoneIcon />
@@ -40,7 +40,7 @@ export default function MoneyDeliveryPage() {
         </button>
         <button
           type="button"
-          onClick={() => showToast("Чат: Telegram Business / Swagger")}
+          onClick={() => showToast("Чат с оператором скоро будет доступен")}
           className="flex h-[60px] w-full items-center justify-center gap-3 rounded-2xl bg-[#046c6d] text-[16px] font-medium text-white active:opacity-90"
         >
           <ChatIcon />
