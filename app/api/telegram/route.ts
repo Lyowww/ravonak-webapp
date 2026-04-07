@@ -18,7 +18,7 @@ export async function GET() {
       webhookSecretConfigured,
       webhookSecretRecommended:
         configured && !webhookSecretConfigured
-          ? "Set TELEGRAM_WEBHOOK_SECRET and setWebhook secret_token for production.",
+          ? "Set TELEGRAM_WEBHOOK_SECRET and setWebhook secret_token for production."
           : null,
     },
   });
