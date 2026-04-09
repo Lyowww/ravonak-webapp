@@ -186,6 +186,35 @@ export async function getChapterProducts(
   );
 }
 
+export async function getCategoryProducts(
+  categoryId: number,
+  tg_id?: number | null,
+  lang: Lang = "ru",
+) {
+  return apiFetch<{
+    category_id: number;
+    category_name: string;
+    products: ProductSchema[];
+  }>(`/products/category/${categoryId}${q({ tg_id: tg_id ?? undefined, lang })}`, {
+    method: "GET",
+  });
+}
+
+export async function getSubcategoryProducts(
+  subcategoryId: number,
+  tg_id?: number | null,
+  lang: Lang = "ru",
+) {
+  return apiFetch<{
+    subcategory_id: number;
+    subcategory_name: string;
+    products: ProductSchema[];
+  }>(
+    `/products/subcategory/${subcategoryId}${q({ tg_id: tg_id ?? undefined, lang })}`,
+    { method: "GET" },
+  );
+}
+
 export type CategoryTreeChapter = {
   id: number;
   name: string;
@@ -441,6 +470,14 @@ export async function transferHistory(tg_id: number, limit = 50, lang: Lang = "r
     `/transfers/history${q({ tg_id, limit, lang })}`,
     { method: "GET" },
   );
+}
+
+export async function getUsdRate(lang: Lang = "ru") {
+  return apiFetch<{
+    success: boolean;
+    usd_rate: number;
+    usd_rate_date?: string | null;
+  }>(`/curs/usd${q({ lang })}`, { method: "GET" });
 }
 
 export type ActiveOrderResponse = {
