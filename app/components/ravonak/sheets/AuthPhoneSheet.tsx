@@ -43,12 +43,12 @@ export function AuthPhoneSheet() {
     }
     setBusy(true);
     try {
-      const ok = await sendSmsCode(phone.trim());
-      if (ok) {
+      const result = await sendSmsCode(phone.trim());
+      if (result.ok) {
         showToast("Код отправлен");
         replaceSheet("auth-sms");
       } else {
-        showToast("Не удалось отправить код");
+        showToast(result.error);
       }
     } finally {
       setBusy(false);

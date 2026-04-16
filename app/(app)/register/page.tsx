@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { RegisterPhoneScreen } from "@/app/components/ravonak/auth/RegisterPhoneScreen";
 
 export default function RegisterPage() {
-  redirect("/?sheet=auth-phone");
+  return <RegisterPhoneScreen />;
 }

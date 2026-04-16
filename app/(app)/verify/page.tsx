@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { VerifyCodeScreen } from "@/app/components/ravonak/auth/VerifyCodeScreen";
 
 export default function VerifyPage() {
-  redirect("/?sheet=auth-sms");
+  return <VerifyCodeScreen />;
 }

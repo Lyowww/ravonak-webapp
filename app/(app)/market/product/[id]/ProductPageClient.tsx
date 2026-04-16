@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getProductById, type ProductSchema } from "@/lib/api";
 import { productFromApi } from "@/lib/product-map";
@@ -17,6 +17,7 @@ const GRAM_STEP = 200;
 
 export default function ProductPageClient() {
   const params = useParams();
+  const router = useRouter();
   const id = Number(params.id as string);
   const { addToCart, authStage } = useRavonak();
   const { openSheet } = useAppSheets();
@@ -171,7 +172,7 @@ export default function ProductPageClient() {
             className="flex flex-[2] items-center justify-center rounded-xl bg-[#046c6d] py-3 text-[14px] font-medium text-white active:opacity-90"
             onClick={() => {
               if (authStage !== "verified") {
-                openSheet("auth-phone");
+                router.push("/register");
                 return;
               }
               void addToCart(id, qty);

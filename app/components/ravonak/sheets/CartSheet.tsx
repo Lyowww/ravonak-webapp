@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { formatSum } from "@/lib/format";
 import { useRavonak } from "@/context/RavonakContext";
 import { useAppSheets } from "@/hooks/useAppSheets";
@@ -10,6 +11,7 @@ import { SheetModal } from "@/app/components/ravonak/SheetModal";
 import { useToast } from "@/app/components/ravonak/ToastProvider";
 
 export function CartSheet() {
+  const router = useRouter();
   const {
     cart,
     cartTotalSum,
@@ -47,7 +49,10 @@ export function CartSheet() {
         </p>
         <button
           type="button"
-          onClick={() => replaceSheet("auth-phone")}
+          onClick={() => {
+            closeSheet();
+            router.push("/register");
+          }}
           className="w-full rounded-2xl bg-[#046c6d] py-3 text-[16px] font-medium text-white"
         >
           Регистрация / вход

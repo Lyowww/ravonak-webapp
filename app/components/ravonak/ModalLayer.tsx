@@ -1,12 +1,21 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAppSheets } from "@/hooks/useAppSheets";
-import { AuthPhoneSheet } from "@/app/components/ravonak/sheets/AuthPhoneSheet";
-import { AuthSmsSheet } from "@/app/components/ravonak/sheets/AuthSmsSheet";
 import { CartSheet } from "@/app/components/ravonak/sheets/CartSheet";
 import { OrderSheet } from "@/app/components/ravonak/sheets/OrderSheet";
 import { CheckoutSheet } from "@/app/components/ravonak/sheets/CheckoutSheet";
+
+function AuthPageRedirect({ href }: { href: string }) {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace(href);
+  }, [href, router]);
+
+  return null;
+}
 
 function ModalLayerInner() {
   const { sheet, orderNumber } = useAppSheets();
@@ -15,9 +24,9 @@ function ModalLayerInner() {
 
   switch (sheet) {
     case "auth-phone":
-      return <AuthPhoneSheet />;
+      return <AuthPageRedirect href="/register" />;
     case "auth-sms":
-      return <AuthSmsSheet />;
+      return <AuthPageRedirect href="/verify" />;
     case "cart":
       return <CartSheet />;
     case "order":

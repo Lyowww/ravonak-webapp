@@ -39,7 +39,7 @@ export default function TransferHistoryPage() {
       <div className="flex min-h-0 flex-1 flex-col bg-white px-4 pt-8">
         <PageHeader backHref="/transfer" title="История переводов" />
         <p className="mt-6 text-[#949494]">Войдите в аккаунт.</p>
-        <Link href="/?sheet=auth-phone" className="mt-4 text-[#046c6d] underline">
+        <Link href="/register" className="mt-4 text-[#046c6d] underline">
           Регистрация
         </Link>
       </div>

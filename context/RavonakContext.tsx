@@ -72,7 +72,9 @@ type Ctx = RavonakState & {
   isRegistered: boolean;
   sumPerUsd: number;
   setPendingPhone: (phoneE164: string) => void;
-  sendSmsCode: (rawPhone: string) => Promise<boolean>;
+  sendSmsCode: (
+    rawPhone: string,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
   verifyOtp: (
     code: string,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
@@ -192,17 +194,29 @@ export function RavonakProvider({ children }: { children: React.ReactNode }) {
   const sendSmsCode = useCallback(
     async (rawPhone: string) => {
       const phone = normalizeUzPhone(rawPhone);
-      if (!phone) return false;
+      if (!phone) {
+        return { ok: false, error: "Не верный формат номера телефона" } as const;
+      }
       const debug =
         typeof process !== "undefined" &&
         process.env.NEXT_PUBLIC_DEBUG_SMS === "1";
       const fn = debug ? authSendCodeDebug : authSendCode;
-      const r = await fn({ phone_number: phone });
-      if (r.success) {
-        setPendingPhone(phone);
-        return true;
+      try {
+        const r = await fn({ phone_number: phone });
+        if (r.success) {
+          setPendingPhone(phone);
+          return { ok: true } as const;
+        }
+        return {
+          ok: false,
+          error: r.message || "Не удалось отправить код",
+        } as const;
+      } catch (e) {
+        return {
+          ok: false,
+          error: e instanceof Error ? e.message : "Не удалось отправить код",
+        } as const;
       }
-      return false;
     },
     [setPendingPhone],
   );

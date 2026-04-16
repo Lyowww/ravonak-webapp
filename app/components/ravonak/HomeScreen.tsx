@@ -137,13 +137,13 @@ export function HomeScreen() {
   const addWithAuth = useCallback(
     (productId: number) => {
       if (authStage !== "verified") {
-        openSheet("auth-phone");
+        router.push("/register");
         return;
       }
       void addToCart(productId, 1);
       showToast("Добавлено в корзину");
     },
-    [authStage, addToCart, showToast, openSheet],
+    [authStage, addToCart, router, showToast],
   );
 
   return (
@@ -346,7 +346,7 @@ export function HomeScreen() {
           {authStage !== "verified" ? (
             <button
               type="button"
-              onClick={() => openSheet("auth-phone")}
+              onClick={() => router.push("/register")}
               className="py-1 underline-offset-2 hover:underline"
             >
               Регистрация / вход
