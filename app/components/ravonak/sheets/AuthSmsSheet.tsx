@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRavonak } from "@/context/RavonakContext";
 import { normalizeUzPhone } from "@/lib/phone";
-import { authSendCode, authSendCodeDebug } from "@/lib/api";
+import { authSendCodeDebug } from "@/lib/api";
 import { useAppSheets } from "@/hooks/useAppSheets";
 import { useTelegramMainButton } from "@/hooks/useTelegramMainButton";
 import { SheetModal } from "@/app/components/ravonak/SheetModal";
@@ -103,12 +103,8 @@ export function AuthSmsSheet() {
           setSec(SMS_TTL_SEC);
           setCode("");
           setErr(null);
-          const debug =
-            typeof process !== "undefined" &&
-            process.env.NEXT_PUBLIC_DEBUG_SMS === "1";
-          const fn = debug ? authSendCodeDebug : authSendCode;
           try {
-            await fn({ phone_number: phone });
+            await authSendCodeDebug({ phone_number: phone });
             showToast("Код отправлен повторно");
           } catch {
             showToast("Не удалось отправить код");

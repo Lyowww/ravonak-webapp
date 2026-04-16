@@ -11,7 +11,6 @@ import {
 import {
   addCartItem,
   authCheck,
-  authSendCode,
   authSendCodeDebug,
   authVerifyCode,
   deleteCartItem,
@@ -197,12 +196,8 @@ export function RavonakProvider({ children }: { children: React.ReactNode }) {
       if (!phone) {
         return { ok: false, error: "Не верный формат номера телефона" } as const;
       }
-      const debug =
-        typeof process !== "undefined" &&
-        process.env.NEXT_PUBLIC_DEBUG_SMS === "1";
-      const fn = debug ? authSendCodeDebug : authSendCode;
       try {
-        const r = await fn({ phone_number: phone });
+        const r = await authSendCodeDebug({ phone_number: phone });
         if (r.success) {
           setPendingPhone(phone);
           return { ok: true } as const;
