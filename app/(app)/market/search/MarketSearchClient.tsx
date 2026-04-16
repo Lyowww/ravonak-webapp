@@ -95,14 +95,9 @@ export default function MarketSearchClient() {
     [cart],
   );
 
-  const backHref =
-    chapterId != null && Number.isFinite(chapterId) && chapterId > 0
-      ? `/market/chapter/${chapterId}`
-      : "/market";
-
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref={backHref} />
+      <PageHeader />
 
       {/* Search bar */}
       <div className="border-b border-[#eee] px-4 pb-3 pt-2">
@@ -197,7 +192,7 @@ export default function MarketSearchClient() {
         )}
       </div>
 
-      <CartBar backHref={backHref} />
+      <CartBar />
     </div>
   );
 }

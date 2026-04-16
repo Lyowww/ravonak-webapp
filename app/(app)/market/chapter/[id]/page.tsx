@@ -96,7 +96,7 @@ export default function ChapterPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/" />
+      <PageHeader />
 
       {/* Sticky search + filter bar */}
       <div className="sticky top-0 z-20 border-b border-[#eee] bg-white px-4 pb-2 pt-2">
@@ -184,7 +184,7 @@ export default function ChapterPage() {
         ) : null}
       </div>
 
-      <CartBar backHref="/" />
+      <CartBar />
     </div>
   );
 }

@@ -41,7 +41,7 @@ export default function NewRecipientPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/market/cart/recipients" title="Получатель (НОВЫЙ)" showLogo={false} />
+      <PageHeader title="Получатель (НОВЫЙ)" showLogo={false} />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <input value={surname} onChange={(e) => setSurname(e.target.value)} placeholder="Фамилия" className={FIELD_CLASS} />

@@ -40,7 +40,7 @@ export default function AddressesPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/market/cart" title="Адрес доставки" showLogo={false} />
+      <PageHeader title="Адрес доставки" showLogo={false} />
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loading ? (

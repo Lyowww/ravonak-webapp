@@ -40,7 +40,7 @@ export default function RecipientsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/market/cart" title="Получатель" showLogo={false} />
+      <PageHeader title="Получатель" showLogo={false} />
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loading ? (

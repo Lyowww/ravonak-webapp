@@ -57,7 +57,7 @@ export default function MarketPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/" title="Магазин" />
+      <PageHeader title="Магазин" />
       <div className="flex-1 space-y-4 px-4 pb-4 pt-2">
         <div className="w-full rounded-xl bg-[#eee] px-3 py-2">
           <label className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export default function MarketPage() {
           ))}
         </div>
       </div>
-      <CartBar backHref="/" />
+      <CartBar />
     </div>
   );
 }

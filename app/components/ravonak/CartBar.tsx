@@ -5,7 +5,7 @@ import { useRavonak } from "@/context/RavonakContext";
 import { useAppSheets } from "@/hooks/useAppSheets";
 import { useRouter } from "next/navigation";
 
-export function CartBar({ backHref = "/" }: { backHref?: string }) {
+export function CartBar() {
   const { cart, cartTotalSum } = useRavonak();
   const { openSheet } = useAppSheets();
   const router = useRouter();

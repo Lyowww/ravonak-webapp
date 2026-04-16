@@ -1,12 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import { figma } from "./assets";
-import { useRouterBack } from "@/hooks/useRouterBack";
-
 type PageHeaderProps = {
   title?: string;
-  backHref: string;
   showLogo?: boolean;
 };
 
@@ -31,53 +26,14 @@ function RavonakLogo() {
   );
 }
 
-export function PageHeader({ title, backHref, showLogo = true }: PageHeaderProps) {
-  const goBack = useRouterBack(backHref);
+export function PageHeader({ title, showLogo = true }: PageHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-[52px] items-center border-b border-[#eee] bg-white px-4">
-      <button
-        type="button"
-        onClick={goBack}
-        className="flex shrink-0 items-center gap-1 text-[14px] font-medium text-[#151515] active:opacity-70"
-      >
-        <svg width="7" height="13" viewBox="0 0 7 13" fill="none" aria-hidden>
-          <path
-            d="M6 1.5L1.5 6.5L6 11.5"
-            stroke="#151515"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <span>Back</span>
-      </button>
-
-      <div className="flex min-w-0 flex-1 items-center justify-center">
-        {showLogo ? (
-          <RavonakLogo />
-        ) : title ? (
-          <h1 className="truncate text-[16px] font-semibold text-[#151515]">{title}</h1>
-        ) : null}
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2">
-        <Image
-          src={figma.iconMenu}
-          alt=""
-          width={20}
-          height={20}
-          unoptimized
-          className="opacity-70"
-        />
-        <Image
-          src={figma.iconMore}
-          alt=""
-          width={20}
-          height={20}
-          unoptimized
-          className="opacity-70"
-        />
-      </div>
+    <header className="sticky top-0 z-30 flex h-[52px] items-center justify-center border-b border-[#eee] bg-white px-4">
+      {showLogo ? (
+        <RavonakLogo />
+      ) : title ? (
+        <h1 className="truncate text-[16px] font-semibold text-[#151515]">{title}</h1>
+      ) : null}
     </header>
   );
 }

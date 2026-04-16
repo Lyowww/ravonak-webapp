@@ -125,7 +125,7 @@ export default function CartPage() {
   if (authStage !== "verified" || tgId == null) {
     return (
       <div className="flex min-h-0 flex-1 flex-col bg-white">
-        <PageHeader backHref="/" />
+        <PageHeader />
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
           <p className="text-center text-[16px] text-[#949494]">
             Войдите в аккаунт для оформления заказа
@@ -145,7 +145,7 @@ export default function CartPage() {
   if (!loading && cart.length === 0) {
     return (
       <div className="flex min-h-0 flex-1 flex-col bg-white">
-        <PageHeader backHref="/" />
+        <PageHeader />
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
           <p className="text-center text-[16px] text-[#949494]">Корзина пуста</p>
           <button
@@ -164,7 +164,7 @@ export default function CartPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/" />
+      <PageHeader />
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-2">
         <h1 className="mb-4 text-[22px] font-bold text-[#151515]">Корзина</h1>

@@ -71,7 +71,7 @@ export default function CourierPage() {
   if (authStage !== "verified" || tgId == null) {
     return (
       <div className="flex min-h-0 flex-1 flex-col bg-white px-4 pt-8">
-        <PageHeader backHref="/" title="Курьер" />
+        <PageHeader title="Курьер" />
         <p className="mt-6 text-[#949494]">Войдите в аккаунт.</p>
       </div>
     );
@@ -79,7 +79,7 @@ export default function CourierPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/" title="Курьер" />
+      <PageHeader title="Курьер" />
       <div className="px-4 pt-3">
         <p className="mb-4 text-[18px] font-medium text-[#151515]">
           Здравствуйте {userName || "курьер"}

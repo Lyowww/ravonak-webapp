@@ -89,7 +89,7 @@ export default function PickerPage() {
   if (authStage !== "verified" || tgId == null) {
     return (
       <div className="flex min-h-0 flex-1 flex-col bg-white px-4 pt-8">
-        <PageHeader backHref="/" title="Сборщик" />
+        <PageHeader title="Сборщик" />
         <p className="mt-6 text-[#949494]">Войдите в аккаунт.</p>
       </div>
     );
@@ -97,7 +97,7 @@ export default function PickerPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white pb-24">
-      <PageHeader backHref="/" title="Сборщик" />
+      <PageHeader title="Сборщик" />
       {loading ? (
         <p className="px-4 py-12 text-center text-[#949494]">Загрузка…</p>
       ) : orders.length > 1 ? (

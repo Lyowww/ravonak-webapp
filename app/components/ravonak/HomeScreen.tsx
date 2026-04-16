@@ -458,7 +458,7 @@ export function HomeScreen() {
         </nav>
       </div>
 
-      <CartBar backHref="/" />
+      <CartBar />
     </div>
   );
 }

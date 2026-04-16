@@ -22,11 +22,19 @@ export type TelegramBackButton = {
   offClick: (fn: () => void) => void;
 };
 
+export type TelegramSettingsButton = {
+  show: () => void;
+  hide: () => void;
+  onClick: (fn: () => void) => void;
+  offClick: (fn: () => void) => void;
+};
+
 export type TelegramWebAppFull = {
   ready: () => void;
   expand?: () => void;
   MainButton: TelegramMainButton;
   BackButton: TelegramBackButton;
+  SettingsButton?: TelegramSettingsButton;
   themeParams?: Record<string, string | undefined>;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;

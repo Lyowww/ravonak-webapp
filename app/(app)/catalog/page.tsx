@@ -37,7 +37,7 @@ export default function CatalogPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/" title="Каталог акций" />
+      <PageHeader title="Каталог акций" />
       <div className="relative mx-4 mt-3 h-[120px] overflow-hidden rounded-xl bg-[#fb0]">
         <div className="absolute left-3 top-3 text-[22px] font-black text-white">
           Акции

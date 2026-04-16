@@ -50,7 +50,7 @@ export default function CustomerOrdersPage() {
   if (authStage !== "verified" || tgId == null) {
     return (
       <div className="flex min-h-0 flex-1 flex-col bg-white px-4 pt-8">
-        <PageHeader backHref="/" title="Заказы" />
+        <PageHeader title="Заказы" />
         <p className="mt-6 text-[#949494]">Войдите в аккаунт.</p>
       </div>
     );
@@ -58,7 +58,7 @@ export default function CustomerOrdersPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/" title="Заказы" />
+      <PageHeader title="Заказы" />
       <div className="px-4 pt-3">
         <div className="mb-4 flex rounded-xl bg-[#eee] p-1">
           <button
