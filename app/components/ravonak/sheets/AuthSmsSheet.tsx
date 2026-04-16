@@ -104,7 +104,7 @@ export function AuthSmsSheet() {
           setCode("");
           setErr(null);
           try {
-            await authSendCodeDebug({ phone_number: phone });
+            await authSendCodeDebug({ phone_number: phone, tg_id: tgId });
             showToast("Код отправлен повторно");
           } catch {
             showToast("Не удалось отправить код");

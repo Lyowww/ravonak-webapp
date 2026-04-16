@@ -197,7 +197,7 @@ export function RavonakProvider({ children }: { children: React.ReactNode }) {
         return { ok: false, error: "Не верный формат номера телефона" } as const;
       }
       try {
-        const r = await authSendCodeDebug({ phone_number: phone });
+        const r = await authSendCodeDebug({ phone_number: phone, tg_id: tgId });
         if (r.success) {
           setPendingPhone(phone);
           return { ok: true } as const;
@@ -213,7 +213,7 @@ export function RavonakProvider({ children }: { children: React.ReactNode }) {
         } as const;
       }
     },
-    [setPendingPhone],
+    [setPendingPhone, tgId],
   );
 
   const verifyOtp = useCallback(

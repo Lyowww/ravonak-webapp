@@ -72,10 +72,13 @@ export async function authSendCode(body: {
 export async function authSendCodeDebug(body: {
   phone_number: string;
   lang?: Lang;
+  tg_id?: number | null;
 }) {
+  const { tg_id, ...payload } = body;
   return apiFetch<AuthResponse>("/auth/send-code-debug", {
     method: "POST",
-    body: JSON.stringify({ ...body, lang: body.lang ?? "ru" }),
+    headers: tg_id != null ? { "x-ravonak-tg-id": String(tg_id) } : undefined,
+    body: JSON.stringify({ ...payload, lang: payload.lang ?? "ru" }),
   });
 }
 
