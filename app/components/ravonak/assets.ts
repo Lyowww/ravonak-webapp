@@ -12,4 +12,7 @@ export const figma = {
   placeholder: "/figma/placeholder.svg",
   promoBg: "/figma/promo-bg.svg",
   promoEllipse: "/figma/promo-ellipse.svg",
+  iconMenu: "/figma/icon-menu.svg",
+  iconMore: "/figma/icon-more.svg",
+  statusRight: "/figma/status-right.svg",
 } as const;

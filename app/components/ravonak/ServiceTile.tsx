@@ -14,30 +14,30 @@ export function ServiceTile({
   href,
   onSelect,
 }: ServiceTileProps) {
-  const className =
-    "flex w-full max-w-[165px] flex-col items-center gap-1 active:opacity-90";
   const remote = imageSrc.startsWith("http");
   const inner = (
     <>
-      <div className="relative h-[54px] w-full overflow-hidden rounded-2xl bg-[#eee]">
-        <div className="absolute inset-x-0 -top-4 flex justify-center">
-          <div className="relative h-[72px] w-[104px]">
+      <div className="relative h-[60px] w-[100px] overflow-hidden rounded-2xl bg-[#eee]">
+        <div className="absolute inset-x-0 -top-3 flex justify-center">
+          <div className="relative h-[76px] w-[108px]">
             <Image
               src={imageSrc}
               alt=""
               fill
               className="object-cover object-top"
-              sizes="165px"
+              sizes="108px"
               unoptimized={remote}
             />
           </div>
         </div>
       </div>
-      <p className="w-full text-center text-[11px] font-medium leading-none text-[#151515]">
+      <p className="w-[100px] text-center text-[11px] font-medium leading-tight text-[#151515]">
         {label}
       </p>
     </>
   );
+
+  const className = "flex flex-col items-center gap-1.5 active:opacity-90";
 
   if (href) {
     return (

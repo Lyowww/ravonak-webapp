@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getChapterProducts, type ChapterProductsResponse } from "@/lib/api";
 import { displayChapterTitle } from "@/lib/display";
 import { productFromApi } from "@/lib/product-map";
@@ -20,11 +20,13 @@ export default function ChapterPage() {
   const params = useParams();
   const router = useRouter();
   const chapterId = Number(params.id as string);
-  const { addToCart, authStage, tgId } = useRavonak();
+  const { addToCart, authStage, tgId, cart, setCartQty } = useRavonak();
   const { showToast } = useToast();
   const [data, setData] = useState<ChapterProductsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [search, setSearch] = useState("");
+  const filterBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!Number.isFinite(chapterId) || chapterId <= 0) {
@@ -43,94 +45,96 @@ export default function ChapterPage() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [chapterId, tgId]);
 
-  const heading = useMemo(
-    () => displayChapterTitle(data?.chapter_name || "Раздел"),
-    [data?.chapter_name],
-  );
+  const subcategories = useMemo(() => data?.subcategories ?? [], [data]);
 
-  const subcategories = useMemo(
-    () => data?.subcategories ?? [],
-    [data?.subcategories],
-  );
-
-  const discountedAll = useMemo(() => {
-    const flat: Product[] = [];
-    for (const sub of subcategories) {
-      for (const p of sub.products) {
-        if (p.discount_percentage > 0) {
-          flat.push(productFromApi(p));
-        }
-      }
-    }
-    return flat;
-  }, [subcategories]);
-
-  const rows = useMemo(() => {
+  const filteredSections = useMemo(() => {
+    const q = search.trim().toLowerCase();
     if (filter === "all") {
-      return [{ id: "all" as const, name: "Со скидкой", products: discountedAll }];
+      return subcategories.map((sub) => ({
+        id: sub.subcategory_id,
+        name: sub.subcategory_name,
+        products: sub.products
+          .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.description ?? "").toLowerCase().includes(q))
+          .map(productFromApi),
+      })).filter((s) => s.products.length > 0);
     }
     const sub = subcategories.find((s) => s.subcategory_id === filter);
     if (!sub) return [];
-    return [
-      {
-        id: sub.subcategory_id,
-        name: sub.subcategory_name,
-        products: sub.products.map(productFromApi),
-      },
-    ];
-  }, [filter, subcategories, discountedAll]);
+    return [{
+      id: sub.subcategory_id,
+      name: sub.subcategory_name,
+      products: sub.products
+        .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.description ?? "").toLowerCase().includes(q))
+        .map(productFromApi),
+    }];
+  }, [subcategories, filter, search]);
+
+  const addWithAuth = useCallback(
+    (product: Product) => {
+      if (authStage !== "verified") {
+        router.push("/register");
+        return;
+      }
+      void addToCart(Number(product.id), 1);
+      showToast("В корзине");
+    },
+    [authStage, addToCart, router, showToast],
+  );
+
+  const getCartLine = useCallback(
+    (productId: number) => cart.find((l) => l.productId === productId),
+    [cart],
+  );
+
+  const getCartIndex = useCallback(
+    (productId: number) => cart.findIndex((l) => l.productId === productId),
+    [cart],
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/" title={heading} />
-      <div className="sticky top-0 z-20 border-b border-[#eee] bg-white/95 px-4 py-2 backdrop-blur-sm">
-        <div className="w-full rounded-xl bg-[#eee] px-3 py-2">
+      <PageHeader backHref="/" />
+
+      {/* Sticky search + filter bar */}
+      <div className="sticky top-0 z-20 border-b border-[#eee] bg-white px-4 pb-2 pt-2">
+        <div className="mb-2 w-full rounded-xl bg-[#eee] px-3 py-2.5">
           <label className="flex items-center gap-3">
-            <Image
-              src={figma.search}
-              alt=""
-              width={20}
-              height={20}
-              unoptimized
+            <Image src={figma.search} alt="" width={18} height={18} unoptimized className="shrink-0 opacity-50" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Найти в магазине"
+              className="min-w-0 flex-1 bg-transparent text-[14px] text-[#151515] placeholder:text-[#949494] focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && search.trim()) {
+                  router.push(`/market/search?q=${encodeURIComponent(search.trim())}&chapter_id=${chapterId}`);
+                }
+              }}
             />
-            <button
-              type="button"
-              className="min-w-0 flex-1 text-left text-[14px] text-[#949494]"
-              onClick={() =>
-                router.push(`/market/search?chapter_id=${chapterId}`)
-              }
-            >
-              Найти в магазине
-            </button>
           </label>
         </div>
+
         {!loading && subcategories.length > 0 ? (
-          <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div ref={filterBarRef} className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               onClick={() => setFilter("all")}
-              className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-medium ${
-                filter === "all"
-                  ? "bg-[#046c6d] text-white"
-                  : "bg-[#eee] text-[#151515]"
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium ${
+                filter === "all" ? "bg-[#046c6d] text-white" : "bg-[#eee] text-[#151515]"
               }`}
             >
-              Все
+              {displayChapterTitle(data?.chapter_name ?? "Все")}
             </button>
             {subcategories.map((s) => (
               <button
                 key={s.subcategory_id}
                 type="button"
                 onClick={() => setFilter(s.subcategory_id)}
-                className={`max-w-[200px] shrink-0 truncate rounded-full px-4 py-2 text-[13px] font-medium ${
-                  filter === s.subcategory_id
-                    ? "bg-[#046c6d] text-white"
-                    : "bg-[#eee] text-[#151515]"
+                className={`max-w-[160px] shrink-0 truncate rounded-full px-3.5 py-1.5 text-[12px] font-medium ${
+                  filter === s.subcategory_id ? "bg-[#046c6d] text-white" : "bg-[#eee] text-[#151515]"
                 }`}
               >
                 {displayChapterTitle(s.subcategory_name)}
@@ -140,40 +144,38 @@ export default function ChapterPage() {
         ) : null}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-6 px-4 pb-4 pt-3">
+      {/* Products content */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4">
         {loading ? (
-          <p className="py-8 text-center text-[#949494]">Загрузка…</p>
+          <p className="py-10 text-center text-[#949494]">Загрузка…</p>
+        ) : filteredSections.length === 0 ? (
+          <p className="py-10 text-center text-[14px] text-[#949494]">Ничего не найдено</p>
         ) : (
-          rows.map((row) => (
-            <section key={String(row.id)}>
-              <h2 className="mb-3 text-[16px] font-semibold text-[#151515]">
-                {row.name}
+          filteredSections.map((section) => (
+            <section key={section.id} className="mb-5 px-3 pt-3">
+              <h2 className="mb-3 text-[15px] font-semibold text-[#151515]">
+                {displayChapterTitle(section.name)}
               </h2>
-              {row.products.length === 0 ? (
-                <p className="text-[14px] text-[#949494]">
-                  {filter === "all"
-                    ? "Нет товаров со скидкой в этом разделе"
-                    : "Нет товаров"}
-                </p>
-              ) : (
-                <div className="-mx-2 flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {row.products.map((p) => (
+              <div className="grid grid-cols-3 gap-2">
+                {section.products.map((p) => {
+                  const line = getCartLine(Number(p.id));
+                  const idx = getCartIndex(Number(p.id));
+                  const step = line?.unit === "grams" ? 200 : 1;
+                  return (
                     <ProductCard
                       key={p.id}
                       product={p}
+                      grid
                       onOpen={() => router.push(`/market/product/${p.id}`)}
-                      onAddToCart={() => {
-                        if (authStage !== "verified") {
-                          router.push("/register");
-                          return;
-                        }
-                        void addToCart(Number(p.id), 1);
-                        showToast("В корзине");
-                      }}
+                      onAddToCart={() => addWithAuth(p)}
+                      cartQty={line?.qty}
+                      cartUnit={line?.unit}
+                      onCartMinus={line ? () => void setCartQty(idx, line.qty - step) : undefined}
+                      onCartPlus={line ? () => void setCartQty(idx, line.qty + step) : undefined}
                     />
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </section>
           ))
         )}
@@ -181,6 +183,7 @@ export default function ChapterPage() {
           <p className="py-8 text-center text-[#949494]">Раздел не найден</p>
         ) : null}
       </div>
+
       <CartBar backHref="/" />
     </div>
   );

@@ -1,84 +1,77 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { transferHistory } from "@/lib/api";
-import type { TransferHistoryItem } from "@/lib/api";
+import { transferHistory, type TransferHistoryItem } from "@/lib/api";
 import { useRavonak } from "@/context/RavonakContext";
-import { PageHeader } from "@/app/components/ravonak/PageHeader";
 
 export default function TransferHistoryPage() {
+  const router = useRouter();
   const { tgId, authStage } = useRavonak();
   const [items, setItems] = useState<TransferHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (tgId == null || authStage !== "verified") {
-      setLoading(false);
-      return;
-    }
+    if (tgId == null || authStage !== "verified") { setLoading(false); return; }
     let cancelled = false;
     (async () => {
       try {
         const r = await transferHistory(tgId);
-        if (cancelled) return;
-        setItems(r.items ?? []);
+        if (!cancelled) setItems(r.items ?? []);
       } catch {
         if (!cancelled) setItems([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [tgId, authStage]);
 
-  if (authStage !== "verified" || tgId == null) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col bg-white px-4 pt-8">
-        <PageHeader backHref="/transfer" title="История переводов" />
-        <p className="mt-6 text-[#949494]">Войдите в аккаунт.</p>
-        <Link href="/register" className="mt-4 text-[#046c6d] underline">
-          Регистрация
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <PageHeader backHref="/transfer" title="История переводов" />
-      {loading ? (
-        <p className="px-4 py-8 text-center text-[#949494]">Загрузка…</p>
-      ) : (
-        <ul className="divide-y divide-[#eee] px-4">
-          {items.map((t) => (
-            <li key={t.id} className="flex items-start justify-between py-4">
-              <div>
-                <p className="text-[14px] font-medium text-[#151515]">
-                  {t.type === "send" ? "Исходящий" : "Входящий"}
-                </p>
-                <p className="text-[13px] text-[#949494]">{t.partner_phone}</p>
-                <p className="text-[12px] text-[#949494]">{t.partner_name}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[12px] text-[#949494]">{t.date}</p>
-                <p
-                  className={`text-[15px] font-semibold ${
-                    t.type === "send" ? "text-[#c83030]" : "text-[#046c6d]"
-                  }`}
-                >
-                  {t.type === "send" ? "-" : "+"} {t.amount} $
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      {!loading && items.length === 0 ? (
-        <p className="py-12 text-center text-[#949494]">Пока нет операций</p>
-      ) : null}
+    <div className="fixed inset-0 z-[200] flex items-end" onClick={() => router.back()}>
+      <div
+        className="relative w-full rounded-t-[24px] bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.18)]"
+        style={{ maxHeight: "80dvh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-[#eee] px-5 py-4">
+          <h2 className="text-[17px] font-semibold text-[#151515]">История переводов</h2>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex size-8 items-center justify-center rounded-full text-[22px] leading-none text-[#949494] active:bg-[#f5f5f5]"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(80dvh - 61px)" }}>
+          {loading ? (
+            <p className="py-8 text-center text-[#949494]">Загрузка…</p>
+          ) : items.length === 0 ? (
+            <p className="py-12 text-center text-[14px] text-[#949494]">Пока нет операций</p>
+          ) : (
+            <ul className="divide-y divide-[#eee]">
+              {items.map((t) => (
+                <li key={t.id} className="flex items-start justify-between px-5 py-4">
+                  <div>
+                    <p className="text-[14px] font-medium text-[#151515]">
+                      {t.type === "send" ? "Перевод" : "Начисление"}
+                    </p>
+                    <p className="text-[13px] text-[#949494]">{t.partner_phone}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[12px] text-[#949494]">{t.date}</p>
+                    <p className={`text-[15px] font-semibold ${t.type === "send" ? "text-[#c83030]" : "text-[#046c6d]"}`}>
+                      {t.type === "send" ? "- " : "+ "}{t.amount.toLocaleString("ru-RU")} $
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

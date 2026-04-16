@@ -8,6 +8,10 @@ import { TelegramChromeSync } from "@/app/components/ravonak/TelegramChromeSync"
 type TgWebApp = {
   ready: () => void;
   expand?: () => void;
+  disableVerticalSwipes?: () => void;
+  isExpanded?: boolean;
+  viewportHeight?: number;
+  viewportStableHeight?: number;
   themeParams?: {
     bg_color?: string;
     text_color?: string;
@@ -17,12 +21,11 @@ type TgWebApp = {
   };
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
+  enableClosingConfirmation?: () => void;
 };
 
 function getTelegramWebApp(): TgWebApp | undefined {
-  return (
-    window as unknown as { Telegram?: { WebApp?: TgWebApp } }
-  ).Telegram?.WebApp;
+  return (window as unknown as { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -30,40 +33,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const tw = getTelegramWebApp();
-    tw?.ready();
-    tw?.expand?.();
-    const tp = tw?.themeParams;
+    if (!tw) return;
+
+    tw.ready();
+    tw.expand?.();
+    tw.disableVerticalSwipes?.();
+
+    const tp = tw.themeParams;
     const root = document.documentElement;
-    if (tp?.bg_color) {
-      root.style.setProperty("--tg-theme-bg-color", tp.bg_color);
-    }
-    if (tp?.text_color) {
-      root.style.setProperty("--tg-theme-text-color", tp.text_color);
-    }
-    if (tp?.hint_color) {
-      root.style.setProperty("--tg-theme-hint-color", tp.hint_color);
-    }
-    if (tp?.link_color) {
-      root.style.setProperty("--tg-theme-link-color", tp.link_color);
-    }
-    if (tp?.secondary_bg_color) {
-      root.style.setProperty("--tg-theme-secondary-bg-color", tp.secondary_bg_color);
-    }
-    tw?.setHeaderColor?.("#ffffff");
-    tw?.setBackgroundColor?.("#d1d1d6");
+
+    if (tp?.bg_color) root.style.setProperty("--tg-theme-bg-color", tp.bg_color);
+    if (tp?.text_color) root.style.setProperty("--tg-theme-text-color", tp.text_color);
+    if (tp?.hint_color) root.style.setProperty("--tg-theme-hint-color", tp.hint_color);
+    if (tp?.link_color) root.style.setProperty("--tg-theme-link-color", tp.link_color);
+    if (tp?.secondary_bg_color) root.style.setProperty("--tg-theme-secondary-bg-color", tp.secondary_bg_color);
+
+    tw.setHeaderColor?.("#ffffff");
+    tw.setBackgroundColor?.("#ffffff");
   }, []);
 
   if (!ready) {
     return (
-      <div className="ravonak-app flex min-h-dvh flex-col items-center justify-center bg-[#d1d1d6] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-        <div className="text-[12px] text-[#949494]">Загрузка…</div>
+      <div className="ravonak-app flex min-h-dvh flex-col items-center justify-center bg-white">
+        <div className="text-[14px] text-[#949494]">Загрузка…</div>
       </div>
     );
   }
 
   return (
-    <div className="ravonak-app relative flex min-h-dvh flex-col bg-[#d1d1d6] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <div className="relative z-[1] mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)] sm:my-0 sm:max-h-none sm:max-w-[min(100%,520px)] sm:rounded-none md:my-2 md:max-h-[min(900px,calc(100dvh-1rem))] md:max-w-[min(100%,560px)] md:rounded-[24px] lg:max-w-[min(100%,640px)]">
+    <div className="ravonak-app relative flex min-h-dvh flex-col bg-white pt-[env(safe-area-inset-top)]">
+      <div className="relative z-[1] mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-white sm:my-0 sm:max-w-[min(100%,520px)] md:my-2 md:max-h-[min(900px,calc(100dvh-1rem))] md:max-w-[min(100%,560px)] md:rounded-[24px] md:shadow-[0_0_0_1px_rgba(0,0,0,0.06)] lg:max-w-[min(100%,640px)]">
         {children}
       </div>
       <ModalLayer />
