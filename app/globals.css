@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  /* Telegram Mini Apps: set at runtime by TelegramSafeAreaSync (see AppShell). */
+  --ravonak-tg-safe-top: 0px;
   --background: #ffffff;
   --foreground: #171717;
   --ravonak-accent: #046c6d;

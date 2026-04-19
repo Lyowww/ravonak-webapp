@@ -4,6 +4,7 @@ import { Suspense, useEffect } from "react";
 import { useRavonak } from "@/context/RavonakContext";
 import { ModalLayer } from "@/app/components/ravonak/ModalLayer";
 import { TelegramChromeSync } from "@/app/components/ravonak/TelegramChromeSync";
+import { TelegramSafeAreaSync } from "@/app/components/ravonak/TelegramSafeAreaSync";
 
 type TgWebApp = {
   ready: () => void;
@@ -52,23 +53,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     tw.setBackgroundColor?.("#ffffff");
   }, []);
 
+  const safeTop =
+    "pt-[max(env(safe-area-inset-top,0px),var(--ravonak-tg-safe-top,0px))]";
+
   if (!ready) {
     return (
-      <div className="ravonak-app flex min-h-dvh flex-col items-center justify-center bg-white">
-        <div className="text-[14px] text-[#949494]">Загрузка…</div>
-      </div>
+      <>
+        <TelegramSafeAreaSync />
+        <div
+          className={`ravonak-app flex min-h-dvh flex-col items-center justify-center bg-white ${safeTop}`}
+        >
+          <div className="text-[14px] text-[#949494]">Загрузка…</div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="ravonak-app relative flex min-h-dvh flex-col bg-white pt-[env(safe-area-inset-top)]">
-      <div className="relative z-[1] mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-white sm:my-0 sm:max-w-[min(100%,520px)] md:my-2 md:max-h-[min(900px,calc(100dvh-1rem))] md:max-w-[min(100%,560px)] md:rounded-[24px] md:shadow-[0_0_0_1px_rgba(0,0,0,0.06)] lg:max-w-[min(100%,640px)]">
-        {children}
+    <>
+      <TelegramSafeAreaSync />
+      <div
+        className={`ravonak-app relative flex min-h-dvh flex-col bg-white ${safeTop}`}
+      >
+        <div className="relative z-[1] mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-white sm:my-0 sm:max-w-[min(100%,520px)] md:my-2 md:max-h-[min(900px,calc(100dvh-1rem))] md:max-w-[min(100%,560px)] md:rounded-[24px] md:shadow-[0_0_0_1px_rgba(0,0,0,0.06)] lg:max-w-[min(100%,640px)]">
+          {children}
+        </div>
+        <ModalLayer />
+        <Suspense fallback={null}>
+          <TelegramChromeSync />
+        </Suspense>
       </div>
-      <ModalLayer />
-      <Suspense fallback={null}>
-        <TelegramChromeSync />
-      </Suspense>
-    </div>
+    </>
   );
 }

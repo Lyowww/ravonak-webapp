@@ -31,3 +31,15 @@ export function resolveTgId(): number | null {
   const n = parseInt(dev, 10);
   return Number.isFinite(n) ? n : null;
 }
+
+/** When true, the app treats you as signed in on local dev so you can skip /register. */
+export function shouldSkipRegisterForLocalDev(): boolean {
+  if (typeof window === "undefined") return false;
+  if (process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === "false") return false;
+  if (process.env.NEXT_PUBLIC_DEV_SKIP_AUTH === "true") return true;
+  return (
+    process.env.NODE_ENV === "development" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")
+  );
+}

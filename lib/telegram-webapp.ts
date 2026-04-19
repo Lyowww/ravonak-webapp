@@ -29,15 +29,28 @@ export type TelegramSettingsButton = {
   offClick: (fn: () => void) => void;
 };
 
+export type TelegramSafeAreaInset = {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+};
+
 export type TelegramWebAppFull = {
   ready: () => void;
   expand?: () => void;
   MainButton: TelegramMainButton;
   BackButton: TelegramBackButton;
   SettingsButton?: TelegramSettingsButton;
+  /** Device notch / system bars (Bot API 8.0+). */
+  safeAreaInset?: TelegramSafeAreaInset;
+  /** Area not covered by Telegram UI (header, etc.). */
+  contentSafeAreaInset?: TelegramSafeAreaInset;
   themeParams?: Record<string, string | undefined>;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
+  onEvent?: (eventType: string, callback: () => void) => void;
+  offEvent?: (eventType: string, callback: () => void) => void;
   HapticFeedback?: {
     impactOccurred?: (style: "light" | "medium" | "heavy" | "rigid" | "soft") => void;
   };

@@ -20,7 +20,7 @@ import {
   updateCartItem,
 } from "@/lib/api";
 import { normalizeUzPhone } from "@/lib/phone";
-import { resolveTgId } from "@/lib/telegram";
+import { resolveTgId, shouldSkipRegisterForLocalDev } from "@/lib/telegram";
 import type { CartLine } from "@/lib/types";
 
 type AuthStage = "guest" | "pending_otp" | "verified";
@@ -120,9 +120,49 @@ export function RavonakProvider({ children }: { children: React.ReactNode }) {
   }, [tgId, state.authStage]);
 
   const bootstrap = useCallback(async () => {
+    const skipRegister = shouldSkipRegisterForLocalDev();
     const id = resolveTgId();
     setTgId(id);
+
+    const emptyMain: MainScreenResponse = {
+      balance_usd: 0,
+      user_name: "Local dev",
+      sections: [],
+      banners: [],
+      promo_products: [],
+      random_products: [],
+    };
+
+    const applyVerified = (
+      main: MainScreenResponse,
+      cart: Awaited<ReturnType<typeof getCart>>,
+      phone: string,
+      role: string | null,
+    ) => {
+      setState({
+        balanceUsd: main.balance_usd,
+        userName: main.user_name,
+        userPhone: phone,
+        authStage: "verified",
+        cart: mapCartItems(cart.items),
+        mainScreen: main,
+        role,
+      });
+    };
+
     if (id == null) {
+      if (skipRegister) {
+        setIsRegistered(true);
+        setState({
+          balanceUsd: 0,
+          userName: "Local dev",
+          userPhone: "",
+          authStage: "verified",
+          cart: [],
+          mainScreen: emptyMain,
+          role: null,
+        });
+      }
       setReady(true);
       return;
     }
@@ -132,22 +172,50 @@ export function RavonakProvider({ children }: { children: React.ReactNode }) {
         setIsRegistered(true);
         const main = await getMainScreen(id);
         const cart = await getCart(id);
-        setState({
-          balanceUsd: main.balance_usd,
-          userName: main.user_name,
-          userPhone: r.phone_number ?? "",
-          authStage: "verified",
-          cart: mapCartItems(cart.items),
-          mainScreen: main,
-          role: r.role ?? null,
-        });
+        applyVerified(main, cart, r.phone_number ?? "", r.role ?? null);
+      } else if (skipRegister) {
+        setIsRegistered(true);
+        try {
+          const main = await getMainScreen(id);
+          const cart = await getCart(id);
+          applyVerified(main, cart, r.phone_number ?? "", r.role ?? null);
+        } catch {
+          setState({
+            balanceUsd: 0,
+            userName: "Local dev",
+            userPhone: r.phone_number ?? "",
+            authStage: "verified",
+            cart: [],
+            mainScreen: emptyMain,
+            role: r.role ?? null,
+          });
+        }
       } else {
         setIsRegistered(false);
         setState((s) => ({ ...s, authStage: "guest", cart: [], mainScreen: null }));
       }
     } catch {
-      setIsRegistered(false);
-      setState((s) => ({ ...s, authStage: "guest" }));
+      if (skipRegister) {
+        setIsRegistered(true);
+        try {
+          const main = await getMainScreen(id);
+          const cart = await getCart(id);
+          applyVerified(main, cart, "", null);
+        } catch {
+          setState({
+            balanceUsd: 0,
+            userName: "Local dev",
+            userPhone: "",
+            authStage: "verified",
+            cart: [],
+            mainScreen: emptyMain,
+            role: null,
+          });
+        }
+      } else {
+        setIsRegistered(false);
+        setState((s) => ({ ...s, authStage: "guest" }));
+      }
     } finally {
       setReady(true);
     }
